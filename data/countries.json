@@ -1,0 +1,82 @@
+[
+  {
+    "country": "Spain",
+    "lat": 40.4168,
+    "lng": -3.7038,
+    "sound": "assets/sounds/spain.mp3",
+    "image": "assets/images/spain.jpg",
+    "description": "Ambiente urbano de Madrid y olas mediterráneas."
+  },
+  {
+    "country": "Japan",
+    "lat": 35.6762,
+    "lng": 139.6503,
+    "sound": "assets/sounds/japan.mp3",
+    "image": "assets/images/japan.jpg",
+    "description": "Trenes bala, cruce de Shibuya y calma en templos."
+  },
+  {
+    "country": "Brazil",
+    "lat": -22.9068,
+    "lng": -43.1729,
+    "sound": "assets/sounds/brazil.mp3",
+    "image": "assets/images/brazil.jpg",
+    "description": "Selva, olas de Copacabana y ritmos cariocas."
+  },
+  {
+    "country": "France",
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "sound": "assets/sounds/france.mp3",
+    "image": "assets/images/france.jpg",
+    "description": "Callejeo parisino, acordeón y cafés."
+  },
+  {
+    "country": "UK",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "sound": "assets/sounds/uk.mp3",
+    "image": "assets/images/uk.jpg",
+    "description": "Lluvia suave, metro y campanadas."
+  },
+  {
+    "country": "Italy",
+    "lat": 41.9028,
+    "lng": 12.4964,
+    "sound": "assets/sounds/italy.mp3",
+    "image": "assets/images/italy.jpg",
+    "description": "Plazas, fuentes y scooters."
+  },
+  {
+    "country": "USA",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "sound": "assets/sounds/usa.mp3",
+    "image": "assets/images/usa.jpg",
+    "description": "Rascacielos, tráfico y sirenas."
+  },
+  {
+    "country": "Mexico",
+    "lat": 19.4326,
+    "lng": -99.1332,
+    "sound": "assets/sounds/mexico.mp3",
+    "image": "assets/images/mexico.jpg",
+    "description": "Mariachi, mercados y callejones."
+  },
+  {
+    "country": "India",
+    "lat": 28.6139,
+    "lng": 77.209,
+    "sound": "assets/sounds/india.mp3",
+    "image": "assets/images/india.jpg",
+    "description": "Tráfico, templos y rezos lejanos."
+  },
+  {
+    "country": "Australia",
+    "lat": -33.8688,
+    "lng": 151.2093,
+    "sound": "assets/sounds/australia.mp3",
+    "image": "assets/images/australia.jpg",
+    "description": "Costa, gaviotas y vida marina."
+  }
+]

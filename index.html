@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SoundTrip</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="anonymous"/>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <div id="map"></div>
+    <aside id="panel">
+      <h1>SoundTrip</h1>
+      <div id="info">
+        <p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>
+      </div>
+      <div class="controls">
+        <button id="randomBtn">Viaje aleatorio</button>
+        <button id="stopBtn">Parar sonido</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script defer
+          src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin="anonymous"></script>
+
+  <!-- Howler JS -->
+  <script defer
+          src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"
+          integrity="sha512-WK2v3g7g1rj4h2q9RZ9h3w1bqX5Q+H3Y3m7g1j0Yx9JcD5kzJqDk0p+f0cB7h0oJ6l6m4pVQIg8r2Kx7S2C0Uw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- App JS -->
+  <script defer src="script.js"></script>
+</body>
+</html>
