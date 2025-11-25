@@ -20,8 +20,18 @@
     <div id="map"></div>
     <aside id="panel">
       <h1>SoundTrip</h1>
+      <div class="passport-box">
+        <p>🌍 Pasaporte: <span id="visited-count">0</span> / 10</p>
+        <div class="progress-bar">
+          <div id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
       <div id="info">
         <p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>
+      </div>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar país..." autocomplete="off">
+        <div id="searchResults" class="results-list"></div>
       </div>
       <div class="controls">
         <button id="randomBtn">Viaje aleatorio</button>

@@ -1,98 +1,132 @@
-// SoundTrip – versión estable usando Audio nativo (sin Howler)
-// Mantiene: marcadores, flyTo, panel, botones, fades y botones aleatorio/parar.
-
-let map, markers = [], places = [], activeMarker = null;
+// ==========================================
+// 1. VARIABLES GLOBALES
+// ==========================================
+let map;
+let markers = [];
+let places = [];
+let activeMarker = null;
 let currentAudio = null;
 let fadeTimer = null;
 
+// Memoria de sesión (se borra al recargar)
+let visitedCountries = []; 
+
+// ==========================================
+// 2. INICIALIZACIÓN
+// ==========================================
 init();
 
 async function init() {
-  // 1) Mapa
-  map = L.map('map', { zoomControl: true, worldCopyJump: true })
-          .setView([20, 0], 2);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 6,
-    attribution: '&copy; OpenStreetMap contributors'
+  // A. Mapa centrado
+  map = L.map('map', { zoomControl: true, worldCopyJump: true }).setView([20, 0], 2);
+
+  // B. Mapa Estilo Esri (Nombres legibles)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
   }).addTo(map);
 
-  // 2) Datos
+  // C. Cargar datos
   try {
     const res = await fetch('data/countries.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     places = await res.json();
   } catch (e) {
     console.error('Error cargando countries.json:', e);
-    alert('No se pudieron cargar los datos. Revisa data/countries.json');
     return;
   }
 
-  // 3) Marcadores
+  // D. Crear marcadores
   places.forEach(p => {
     const m = L.marker([p.lat, p.lng]).addTo(map);
-    m.bindTooltip(p.country, { direction: 'top', offset: [0, -8] });
     m.on('click', () => showPlace(p, m));
+    m.bindTooltip(p.country); 
     markers.push(m);
   });
 
-  // 4) Botones
-  document.getElementById('randomBtn').onclick = goRandom;
-  document.getElementById('stopBtn').onclick = stopSound;
+  // E. Botones globales
+  const randomBtn = document.getElementById('randomBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  
+  if(randomBtn) randomBtn.onclick = goRandom;
+  if(stopBtn) stopBtn.onclick = stopSound;
+
+  // F. Inicializar barra a 0
+  updatePassport();
+
+  // G. ACTIVAR BUSCADOR (NUEVO)
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    // Detectar escritura
+    searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+    
+    // Cerrar buscador si hacemos clic fuera
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-container')) {
+        const results = document.getElementById('searchResults');
+        if (results) results.style.display = 'none';
+      }
+    });
+  }
 }
 
+// ==========================================
+// 3. MOSTRAR PAÍS
+// ==========================================
 function showPlace(place, markerRef = null) {
-  // Resaltar marcador
+  // Gestión visual del marcador
   if (activeMarker) activeMarker.setOpacity(1);
-  if (markerRef) { activeMarker = markerRef; activeMarker.setOpacity(0.6); }
+  if (markerRef) {
+    activeMarker = markerRef;
+    activeMarker.setOpacity(0.5);
+  }
 
-  // Detener audio anterior con fade
+  // Pasaporte (Solo sesión actual)
+  if (!visitedCountries.includes(place.country)) {
+    visitedCountries.push(place.country);
+    updatePassport();
+  }
+
+  const isVisited = visitedCountries.includes(place.country);
+  const badgeHTML = isVisited ? '<span class="visited-tag">✅ Visitado</span>' : '';
+
+  // Audio y Panel
   fadeOutAndStop();
 
-  // Panel
   const info = document.getElementById('info');
   info.innerHTML = `
-    <h2>${place.country}</h2>
+    <h2>${place.country} ${badgeHTML}</h2>
     <img src="${place.image}" alt="${place.country}" onerror="this.style.display='none'"/>
     <p>${place.description}</p>
-    <div style="display:flex; gap:8px; margin-top:8px;">
-      <button id="playBtn">Reproducir</button>
-      <button id="pauseBtn" style="background:#303b47">Pausa</button>
+    <div class="audio-controls" style="display:flex; gap:8px; margin-top:10px;">
+      <button id="playBtn">▶ Reproducir</button>
+      <button id="pauseBtn" style="background:#303b47">⏸ Pausa</button>
     </div>
   `;
 
-  // Controles
-  document.getElementById('playBtn').onclick  = () => startAudio(place.sound);
-  document.getElementById('pauseBtn').onclick = pauseAudio;
+  const btnPlay = document.getElementById('playBtn');
+  const btnPause = document.getElementById('pauseBtn');
 
-  // Zoom al país
-  map.flyTo([place.lat, place.lng], 4, { duration: 1.2 });
+  if(btnPlay) btnPlay.onclick  = () => startAudio(place.sound);
+  if(btnPause) btnPause.onclick = pauseAudio;
+
+  map.flyTo([place.lat, place.lng], 5, { duration: 1.5 });
 }
 
-/* ========== Audio nativo ========== */
+// ==========================================
+// 4. AUDIO
+// ==========================================
 function startAudio(src) {
   try {
-    fadeOutAndStop(); // por si hubiera algo sonando
-
+    fadeOutAndStop();
     currentAudio = new Audio(src);
-    currentAudio.volume = 0;          // empezamos bajo para hacer fade-in
-    currentAudio.loop = true;         // opcional; quítalo si no quieres loop
+    currentAudio.volume = 0; 
+    currentAudio.loop = true;
+    
     const playPromise = currentAudio.play();
-
-    if (playPromise && typeof playPromise.then === 'function') {
-      playPromise.then(() => {
-        // Fade-in suave a 0.85
-        fadeTo(0.85, 300);
-      }).catch(err => {
-        console.warn('Reproducción bloqueada o error:', err);
-        alert('No se pudo reproducir el audio. Comprueba el volumen del sistema y la ruta: ' + src);
-      });
-    } else {
-      // Navegadores viejos: subir volumen sin promesa
-      currentAudio.volume = 0.85;
+    if (playPromise !== undefined) {
+      playPromise.then(() => fadeTo(0.85, 500)).catch(e => console.warn(e));
     }
-  } catch (e) {
-    console.error('Error iniciando audio:', e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 function pauseAudio() {
@@ -101,41 +135,116 @@ function pauseAudio() {
 
 function stopSound() {
   fadeOutAndStop();
-  if (activeMarker) { activeMarker.setOpacity(1); activeMarker = null; }
+  if (activeMarker) {
+    activeMarker.setOpacity(1);
+    activeMarker = null;
+  }
 }
 
 function fadeOutAndStop() {
   if (!currentAudio) return;
-  fadeTo(0, 250, () => {
-    try { currentAudio.pause(); } catch(_) {}
-    currentAudio = null;
-  });
-}
-
-function fadeTo(targetVol = 0.85, ms = 300, done = null) {
-  if (!currentAudio) { if (done) done(); return; }
-  if (fadeTimer) clearInterval(fadeTimer);
-
-  const steps = Math.max(1, Math.floor(ms / 20));
-  const start = currentAudio.volume;
-  const delta = (targetVol - start) / steps;
-  let i = 0;
-
-  fadeTimer = setInterval(() => {
-    if (!currentAudio) { clearInterval(fadeTimer); return; }
-    i++;
-    const v = Math.min(1, Math.max(0, start + delta * i));
-    currentAudio.volume = v;
-    if (i >= steps) {
-      clearInterval(fadeTimer);
-      if (done) done();
+  const soundToKill = currentAudio; 
+  currentAudio = null; 
+  let vol = soundToKill.volume;
+  const fadeOut = setInterval(() => {
+    vol -= 0.1;
+    if (vol <= 0) {
+      clearInterval(fadeOut);
+      try { soundToKill.pause(); } catch(e){}
+    } else {
+      soundToKill.volume = vol;
     }
-  }, 20);
+  }, 50);
 }
 
-/* ========== Utilidades ========== */
+function fadeTo(targetVol, ms) {
+  if (!currentAudio) return;
+  const steps = 20;
+  const stepTime = ms / steps;
+  const inc = targetVol / steps;
+  let timer = setInterval(() => {
+    if (!currentAudio || currentAudio.volume >= targetVol) {
+      clearInterval(timer); return;
+    }
+    currentAudio.volume = Math.min(1, currentAudio.volume + inc);
+  }, stepTime);
+}
+
+// ==========================================
+// 5. UTILIDADES
+// ==========================================
+function updatePassport() {
+  const total = places.length; 
+  const visited = visitedCountries.length;
+  const percent = total > 0 ? (visited / total) * 100 : 0;
+
+  const countEl = document.getElementById('visited-count');
+  if(countEl) countEl.innerText = visited;
+  
+  const fillEl = document.getElementById('progress-fill');
+  if(fillEl) fillEl.style.width = `${percent}%`;
+}
+
 function goRandom() {
   if (!places.length) return;
   const r = places[Math.floor(Math.random() * places.length)];
-  showPlace(r);
+  let m = null;
+  markers.forEach(marker => {
+    const latlng = marker.getLatLng();
+    if(latlng.lat === r.lat && latlng.lng === r.lng) m = marker;
+  });
+  showPlace(r, m);
+}
+
+// ==========================================
+// 6. BUSCADOR (NUEVO)
+// ==========================================
+function handleSearch(query) {
+  const resultsContainer = document.getElementById('searchResults');
+  if (!resultsContainer) return;
+
+  const term = query.toLowerCase().trim();
+
+  // Si está vacío, ocultamos la lista
+  if (term.length === 0) {
+    resultsContainer.style.display = 'none';
+    return;
+  }
+
+  // Filtrar países
+  const filtered = places.filter(p => p.country.toLowerCase().includes(term));
+
+  // Generar HTML de resultados
+  if (filtered.length > 0) {
+    resultsContainer.innerHTML = filtered.map(p => `
+      <div class="result-item" onclick="selectSearchedCountry('${p.country}')">
+        <img src="${p.image}" style="width:30px;height:20px;object-fit:cover;border-radius:2px;margin-right:8px;">
+        <span>${p.country}</span>
+      </div>
+    `).join('');
+    resultsContainer.style.display = 'block';
+  } else {
+    resultsContainer.innerHTML = '<div class="result-item" style="padding:10px;">No se encontraron resultados</div>';
+    resultsContainer.style.display = 'block';
+  }
+}
+
+// Función auxiliar para cuando haces clic en un resultado
+function selectSearchedCountry(countryName) {
+  // Buscar el objeto del país
+  const place = places.find(p => p.country === countryName);
+  if (!place) return;
+
+  // Buscar su marcador
+  const index = places.indexOf(place);
+  const marker = markers[index];
+
+  // Ejecutar la acción principal
+  showPlace(place, marker);
+
+  // Limpiar buscador
+  const input = document.getElementById('searchInput');
+  const results = document.getElementById('searchResults');
+  if(input) input.value = '';
+  if(results) results.style.display = 'none';
 }
