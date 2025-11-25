@@ -8,8 +8,9 @@ let activeMarker = null;
 let currentAudio = null;
 let fadeTimer = null;
 
-// Memoria de sesión (se borra al recargar)
+// Configuración
 let visitedCountries = []; 
+let globalVolume = 0.5; // El volumen empieza al 50%
 
 // ==========================================
 // 2. INICIALIZACIÓN
@@ -17,12 +18,12 @@ let visitedCountries = [];
 init();
 
 async function init() {
-  // A. Mapa centrado
+  // A. Mapa
   map = L.map('map', { zoomControl: true, worldCopyJump: true }).setView([20, 0], 2);
 
-  // B. Mapa Estilo Esri (Nombres legibles)
+  // B. Capa Esri (Estética Atlas)
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+    attribution: 'Tiles &copy; Esri'
   }).addTo(map);
 
   // C. Cargar datos
@@ -46,31 +47,16 @@ async function init() {
   // E. Botones globales
   const randomBtn = document.getElementById('randomBtn');
   const stopBtn = document.getElementById('stopBtn');
-  
   if(randomBtn) randomBtn.onclick = goRandom;
   if(stopBtn) stopBtn.onclick = stopSound;
 
-  // F. Inicializar barra a 0
+  // F. Inicializar UI
   updatePassport();
-
-  // G. ACTIVAR BUSCADOR (NUEVO)
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    // Detectar escritura
-    searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
-    
-    // Cerrar buscador si hacemos clic fuera
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.search-container')) {
-        const results = document.getElementById('searchResults');
-        if (results) results.style.display = 'none';
-      }
-    });
-  }
+  initSearch();
 }
 
 // ==========================================
-// 3. MOSTRAR PAÍS
+// 3. MOSTRAR PAÍS (INTERFAZ)
 // ==========================================
 function showPlace(place, markerRef = null) {
   // Gestión visual del marcador
@@ -80,7 +66,7 @@ function showPlace(place, markerRef = null) {
     activeMarker.setOpacity(0.5);
   }
 
-  // Pasaporte (Solo sesión actual)
+  // Pasaporte
   if (!visitedCountries.includes(place.country)) {
     visitedCountries.push(place.country);
     updatePassport();
@@ -89,42 +75,60 @@ function showPlace(place, markerRef = null) {
   const isVisited = visitedCountries.includes(place.country);
   const badgeHTML = isVisited ? '<span class="visited-tag">✅ Visitado</span>' : '';
 
-  // Audio y Panel
+  // Parar audio anterior
   fadeOutAndStop();
 
   const info = document.getElementById('info');
+  
+  // Generar HTML (Incluye el nuevo Slider de Volumen)
   info.innerHTML = `
     <h2>${place.country} ${badgeHTML}</h2>
     <img src="${place.image}" alt="${place.country}" onerror="this.style.display='none'"/>
     <p>${place.description}</p>
-    <div class="audio-controls" style="display:flex; gap:8px; margin-top:10px;">
-      <button id="playBtn">▶ Reproducir</button>
-      <button id="pauseBtn" style="background:#303b47">⏸ Pausa</button>
+    
+    <div class="audio-controls" style="margin-top:10px;">
+      <div style="display:flex; gap:8px;">
+        <button id="playBtn" style="flex:1;">▶ Reproducir</button>
+        <button id="pauseBtn" style="flex:1; background:#303b47">⏸ Pausa</button>
+      </div>
+
+      <div class="volume-container">
+        <span class="volume-icon">🔊</span>
+        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="${globalVolume}">
+      </div>
     </div>
   `;
 
-  const btnPlay = document.getElementById('playBtn');
-  const btnPause = document.getElementById('pauseBtn');
+  // Asignar eventos a botones
+  document.getElementById('playBtn').onclick  = () => startAudio(place.sound);
+  document.getElementById('pauseBtn').onclick = pauseAudio;
 
-  if(btnPlay) btnPlay.onclick  = () => startAudio(place.sound);
-  if(btnPause) btnPause.onclick = pauseAudio;
+  // EVENTO DE VOLUMEN: Escuchar cambios en tiempo real
+  const slider = document.getElementById('volSlider');
+  slider.addEventListener('input', (e) => {
+    globalVolume = parseFloat(e.target.value); // Guardar valor
+    if (currentAudio) {
+      currentAudio.volume = globalVolume; // Aplicar al momento
+    }
+  });
 
   map.flyTo([place.lat, place.lng], 5, { duration: 1.5 });
 }
 
 // ==========================================
-// 4. AUDIO
+// 4. AUDIO (CONTROL AVANZADO)
 // ==========================================
 function startAudio(src) {
   try {
     fadeOutAndStop();
     currentAudio = new Audio(src);
-    currentAudio.volume = 0; 
+    currentAudio.volume = 0; // Empieza en silencio para fade-in
     currentAudio.loop = true;
     
     const playPromise = currentAudio.play();
     if (playPromise !== undefined) {
-      playPromise.then(() => fadeTo(0.85, 500)).catch(e => console.warn(e));
+      // Hacemos fade hasta el volumen que haya elegido el usuario (globalVolume)
+      playPromise.then(() => fadeTo(globalVolume, 500)).catch(e => console.warn(e));
     }
   } catch (e) { console.error(e); }
 }
@@ -146,6 +150,7 @@ function fadeOutAndStop() {
   const soundToKill = currentAudio; 
   currentAudio = null; 
   let vol = soundToKill.volume;
+  
   const fadeOut = setInterval(() => {
     vol -= 0.1;
     if (vol <= 0) {
@@ -162,16 +167,21 @@ function fadeTo(targetVol, ms) {
   const steps = 20;
   const stepTime = ms / steps;
   const inc = targetVol / steps;
+  
   let timer = setInterval(() => {
+    // Si llegamos al volumen deseado o el audio se paró
     if (!currentAudio || currentAudio.volume >= targetVol) {
       clearInterval(timer); return;
     }
-    currentAudio.volume = Math.min(1, currentAudio.volume + inc);
+    // Subir volumen sin pasarse del máximo
+    let nextVol = currentAudio.volume + inc;
+    if (nextVol > 1) nextVol = 1;
+    currentAudio.volume = nextVol;
   }, stepTime);
 }
 
 // ==========================================
-// 5. UTILIDADES
+// 5. UTILIDADES Y BUSCADOR
 // ==========================================
 function updatePassport() {
   const total = places.length; 
@@ -196,25 +206,30 @@ function goRandom() {
   showPlace(r, m);
 }
 
-// ==========================================
-// 6. BUSCADOR (NUEVO)
-// ==========================================
+function initSearch() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-container')) {
+        const results = document.getElementById('searchResults');
+        if (results) results.style.display = 'none';
+      }
+    });
+  }
+}
+
 function handleSearch(query) {
   const resultsContainer = document.getElementById('searchResults');
   if (!resultsContainer) return;
-
   const term = query.toLowerCase().trim();
 
-  // Si está vacío, ocultamos la lista
   if (term.length === 0) {
     resultsContainer.style.display = 'none';
     return;
   }
-
-  // Filtrar países
   const filtered = places.filter(p => p.country.toLowerCase().includes(term));
 
-  // Generar HTML de resultados
   if (filtered.length > 0) {
     resultsContainer.innerHTML = filtered.map(p => `
       <div class="result-item" onclick="selectSearchedCountry('${p.country}')">
@@ -229,20 +244,12 @@ function handleSearch(query) {
   }
 }
 
-// Función auxiliar para cuando haces clic en un resultado
 function selectSearchedCountry(countryName) {
-  // Buscar el objeto del país
   const place = places.find(p => p.country === countryName);
   if (!place) return;
-
-  // Buscar su marcador
   const index = places.indexOf(place);
   const marker = markers[index];
-
-  // Ejecutar la acción principal
   showPlace(place, marker);
-
-  // Limpiar buscador
   const input = document.getElementById('searchInput');
   const results = document.getElementById('searchResults');
   if(input) input.value = '';

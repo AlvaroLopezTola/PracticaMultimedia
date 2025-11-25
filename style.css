@@ -211,3 +211,55 @@ button:focus-visible{
   border: none !important; /* Sobrescribir estilo general */
   margin: 0 !important;
 }
+/* =========================================
+   CONTROL DE VOLUMEN (NUEVO)
+   ========================================= */
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.volume-icon {
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+/* Estilo del deslizador (Slider) */
+input[type=range] {
+  -webkit-appearance: none; /* Quitar estilo feo de Windows */
+  width: 100%;
+  background: transparent;
+}
+
+/* La línea del slider (Pista) */
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: #232a34;
+  border-radius: 3px;
+}
+
+/* La bolita del slider (Thumb) */
+input[type=range]::-webkit-slider-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -5px; /* Centrar verticalmente */
+  box-shadow: 0 0 10px rgba(31, 111, 235, 0.5);
+  transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #fff;
+}
