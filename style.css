@@ -263,3 +263,260 @@ input[type=range]::-webkit-slider-thumb:hover {
   transform: scale(1.2);
   background: #fff;
 }
+
+/* ===== Reset Passport Button ===== */
+.reset-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: #8b0000; /* rojo elegante */
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .2s, transform .08s;
+  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.35);
+}
+
+.reset-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.reset-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ===========================
+   MODAL REINICIAR PASAPORTE
+   =========================== */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 1;
+  transition: opacity .25s ease;
+}
+
+.modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-content {
+  background: var(--panel);
+  padding: 25px 30px;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.45);
+  animation: modalFade .25s ease;
+}
+
+@keyframes modalFade {
+  from { transform: scale(0.93); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.modal-content h2 {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+}
+
+.modal-content p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.modal-btn.cancel {
+  background: #303b47;
+  color: white;
+}
+
+.modal-btn.confirm {
+  background: #b30000;
+  color: white;
+  box-shadow: 0 4px 14px rgba(179,0,0,0.35);
+}
+
+.modal-btn:hover {
+  opacity: .9;
+}
+/* ===========================
+   SPLASH SCREEN FINAL — OPACO
+   =========================== */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+
+  /* 🔥 Fondo espectacular */
+  background-image: url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1950&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* 🔥 Capa oscura para que el texto se vea brutal */
+  box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.55);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 999999999; /* EL MÁXIMO, POR ENCIMA DEL MAPA */
+  opacity: 1;
+  transition: opacity .9s ease;
+}
+
+.splash.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Caja del contenido */
+.splash-content {
+  text-align: center;
+  z-index: 10;
+  animation: fadeUp 1.2s ease forwards;
+
+  background: rgba(255,255,255,0.07);
+  padding: 40px 60px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+.splash-logo {
+  font-size: 5rem;
+  animation: pulseGlow 2.3s infinite ease-in-out;
+}
+
+.splash-title {
+  margin-top: 20px;
+  font-size: 3rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 0 15px rgba(255,255,255,0.45);
+}
+
+.splash-subtitle {
+  margin-top: 10px;
+  font-size: 1.3rem;
+  color: #e6eef9;
+}
+
+/* Botón */
+.start-btn {
+  margin-top: 30px;
+  padding: 14px 42px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #1f6feb, #2a7aff);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+
+.start-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 10px 30px rgba(31,110,235,0.7);
+}
+
+/* Animaciones */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%   { transform: scale(1);   filter: drop-shadow(0 0 12px rgba(0,180,255,0.3)); }
+  50%  { transform: scale(1.12); filter: drop-shadow(0 0 20px rgba(0,180,255,0.6)); }
+  100% { transform: scale(1);   filter: drop-shadow(0 0 12px rgba(0,180,255,0.3)); }
+}
+
+/* ========================================
+   PARTICULAS SUAVES ANIMADAS (FONDO)
+   ======================================== */
+
+/* ========================================
+   EFECTO NIEBLA SUAVE ANIMADA (FOG) — INTENSO
+   ======================================== */
+
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Capa 1 - Niebla profunda */
+.particles::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 160%;
+  height: 160%;
+  background: url("https://i.imgur.com/8fK4h8P.png");
+  background-size: cover;
+  opacity: 0.32;       /* 🔥 más visible */
+  filter: blur(12px);  /* niebla suave */
+  animation: fogMove1 26s ease-in-out infinite alternate;
+}
+
+/* Capa 2 - Niebla flotante */
+.particles::after {
+  content: "";
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 170%;
+  height: 170%;
+  background: url("https://i.imgur.com/8fK4h8P.png");
+  background-size: cover;
+  opacity: 0.22;       /* 🔥 segunda capa para efecto cine */
+  filter: blur(18px);
+  animation: fogMove2 20s ease-in-out infinite alternate;
+}
+
+@keyframes fogMove1 {
+  0%   { transform: scale(1.1) translate(0, 0); }
+  100% { transform: scale(1.25) translate(-90px, -40px); }
+}
+
+@keyframes fogMove2 {
+  0%   { transform: scale(1.25) translate(30px, 20px); }
+  100% { transform: scale(1.35) translate(-60px, 10px); }
+}
+
+
+

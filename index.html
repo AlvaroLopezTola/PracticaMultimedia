@@ -15,6 +15,24 @@
   <!-- App CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
+
+<!-- =====================
+     SPLASH SCREEN
+     ===================== -->
+<div id="splash-screen" class="splash">
+
+  <!-- Fondo animado -->
+   <div class="particles"></div>
+  <div class="splash-content">
+    <div class="splash-logo">🌍</div>
+    <h1 class="splash-title">SoundTrip</h1>
+    <p class="splash-subtitle">Explora el mundo a través del sonido</p>
+
+    <button id="startBtn" class="start-btn">EMPEZAR</button>
+  </div>
+</div>
+
+
 <body>
   <main class="app">
     <div id="map"></div>
@@ -26,6 +44,8 @@
           <div id="progress-fill" style="width: 0%"></div>
         </div>
       </div>
+      <button id="resetPassportBtn" class="reset-btn">🔄 Reiniciar pasaporte</button>
+
       <div id="info">
         <p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>
       </div>
@@ -54,5 +74,21 @@
 
   <!-- App JS -->
   <script defer src="script.js"></script>
+
+  <!-- =======================
+     MODAL REINICIAR PASAPORTE
+     ======================= -->
+<div id="resetModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>🔄 Reiniciar pasaporte</h2>
+    <p>Perderás todo tu progreso. ¿Seguro que quieres continuar?</p>
+
+    <div class="modal-buttons">
+      <button id="cancelReset" class="modal-btn cancel">Cancelar</button>
+      <button id="confirmReset" class="modal-btn confirm">Reiniciar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

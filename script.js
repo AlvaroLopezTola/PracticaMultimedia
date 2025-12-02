@@ -8,9 +8,35 @@ let activeMarker = null;
 let currentAudio = null;
 let fadeTimer = null;
 
+
+
 // Configuración
-let visitedCountries = []; 
+// ==========================================
+// PERSISTENCIA REAL DEL PASAPORTE
+// ==========================================
+const STORAGE_KEY = "soundtrip_visited";
+
+let visitedCountries = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+function saveVisited() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedCountries));
+}
+
 let globalVolume = 0.5; // El volumen empieza al 50%
+
+
+// ============================
+// CONTROL SPLASH SCREEN
+// ============================
+window.addEventListener("DOMContentLoaded", () => {
+  const splash = document.getElementById("splash-screen");
+  const startBtn = document.getElementById("startBtn");
+
+  startBtn.addEventListener("click", () => {
+    splash.classList.add("hidden");
+  });
+});
+
 
 // ==========================================
 // 2. INICIALIZACIÓN
@@ -47,8 +73,11 @@ async function init() {
   // E. Botones globales
   const randomBtn = document.getElementById('randomBtn');
   const stopBtn = document.getElementById('stopBtn');
+  const resetBtn = document.getElementById("resetPassportBtn");
   if(randomBtn) randomBtn.onclick = goRandom;
   if(stopBtn) stopBtn.onclick = stopSound;
+  if (resetBtn) resetBtn.onclick = resetPassport;
+
 
   // F. Inicializar UI
   updatePassport();
@@ -56,10 +85,31 @@ async function init() {
 }
 
 // ==========================================
+// MODAL CONTROL (nuevo)
+// ==========================================
+const resetModal = document.getElementById("resetModal");
+const cancelReset = document.getElementById("cancelReset");
+const confirmReset = document.getElementById("confirmReset");
+
+cancelReset.onclick = () => resetModal.classList.add("hidden");
+
+function openResetModal() {
+  resetModal.classList.remove("hidden");
+}
+
+// Al pulsar REINICIAR dentro del modal:
+confirmReset.onclick = () => {
+  resetModal.classList.add("hidden");
+  executePassportReset();
+};
+
+
+// ==========================================
 // 3. MOSTRAR PAÍS (INTERFAZ)
 // ==========================================
 function showPlace(place, markerRef = null) {
   // Gestión visual del marcador
+  
   if (activeMarker) activeMarker.setOpacity(1);
   if (markerRef) {
     activeMarker = markerRef;
@@ -67,10 +117,12 @@ function showPlace(place, markerRef = null) {
   }
 
   // Pasaporte
-  if (!visitedCountries.includes(place.country)) {
+if (!visitedCountries.includes(place.country)) {
     visitedCountries.push(place.country);
+    saveVisited();        // 🔥 GUARDAR PROGRESO REAL
     updatePassport();
-  }
+}
+
 
   const isVisited = visitedCountries.includes(place.country);
   const badgeHTML = isVisited ? '<span class="visited-tag">✅ Visitado</span>' : '';
@@ -180,6 +232,7 @@ function fadeTo(targetVol, ms) {
   }, stepTime);
 }
 
+
 // ==========================================
 // 5. UTILIDADES Y BUSCADOR
 // ==========================================
@@ -255,3 +308,26 @@ function selectSearchedCountry(countryName) {
   if(input) input.value = '';
   if(results) results.style.display = 'none';
 }
+
+// ABRIR MODAL
+function resetPassport() {
+  openResetModal();
+}
+
+// EJECUTAR RESETEO REAL
+function executePassportReset() {
+  visitedCountries = [];
+  saveVisited();
+  updatePassport();
+
+  const info = document.getElementById("info");
+  info.innerHTML = `<p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>`;
+
+  if (activeMarker) {
+    activeMarker.setOpacity(1);
+    activeMarker = null;
+  }
+
+  stopSound();
+}
+
