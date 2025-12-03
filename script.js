@@ -3,12 +3,12 @@
 // ==========================================
 let map;
 let markers = [];
-let places = []; // Datos crudos
+let places = []; 
 let activeMarker = null;
 let currentAudio = null;
 let fadeTimer = null;
 
-// VARIABLES DEL VISUALIZADOR DE AUDIO (NUEVO)
+// VARIABLES DEL VISUALIZADOR DE AUDIO
 let audioContext = null;
 let analyser = null;
 let dataArray = null;
@@ -25,7 +25,7 @@ function saveVisited() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedCountries));
 }
 
-let globalVolume = 0.5; // El volumen empieza al 50%
+let globalVolume = 0.5; 
 
 // ============================
 // CONTROL SPLASH SCREEN
@@ -37,7 +37,6 @@ window.addEventListener("DOMContentLoaded", () => {
   if(startBtn && splash) {
     startBtn.addEventListener("click", () => {
       splash.classList.add("hidden");
-      // Inicializar contexto de audio con interacción de usuario (Requisito de navegadores)
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -54,7 +53,7 @@ async function init() {
   // A. Mapa
   map = L.map('map', { zoomControl: true, worldCopyJump: true }).setView([20, 0], 2);
 
-  // B. Capa Esri (Estética Atlas)
+  // B. Capa Esri
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Tiles &copy; Esri'
   }).addTo(map);
@@ -69,7 +68,7 @@ async function init() {
     return;
   }
 
-  // D. Renderizar marcadores (Usamos función nueva para soportar filtros)
+  // D. Renderizar marcadores
   renderMarkers(places);
 
   // E. Botones globales
@@ -84,23 +83,51 @@ async function init() {
   // F. Inicializar UI
   updatePassport();
   initSearch();
-  initFilters(); // NUEVO: Activar botones de filtro
+  initFilters();
 }
 
 // ==========================================
-// LOGICA DE MAPA Y MARCADORES (Con Filtros)
+// FUNCIONES AUXILIARES: API CLIMA
+// ==========================================
+async function getWeather(lat, lng) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&timezone=auto`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    return {
+      temp: data.current_weather.temperature,
+      code: data.current_weather.weathercode,
+      time: data.current_weather.time
+    };
+  } catch (e) {
+    console.error("Error clima:", e);
+    return null; 
+  }
+}
+
+function getWeatherIcon(code) {
+  if (code === 0) return "☀️"; 
+  if (code >= 1 && code <= 3) return "⛅"; 
+  if (code >= 45 && code <= 48) return "🌫️"; 
+  if (code >= 51 && code <= 67) return "🌧️"; 
+  if (code >= 71 && code <= 86) return "❄️"; 
+  if (code >= 95) return "⛈️"; 
+  return "🌡️";
+}
+
+// ==========================================
+// LOGICA DE MAPA Y MARCADORES
 // ==========================================
 function renderMarkers(listToRender) {
-  // 1. Limpiar mapa actual
   markers.forEach(m => map.removeLayer(m));
   markers = []; 
 
-  // 2. Pintar nuevos
   listToRender.forEach(p => {
     const m = L.marker([p.lat, p.lng]).addTo(map);
     m.on('click', () => showPlace(p, m));
     m.bindTooltip(p.country); 
-    m.placeData = p; // Guardar referencia para búsqueda
+    m.placeData = p; 
     markers.push(m);
   });
 }
@@ -109,11 +136,9 @@ function initFilters() {
   const buttons = document.querySelectorAll('.filter-btn');
   buttons.forEach(btn => {
     btn.addEventListener('click', () => {
-      // Estilo activo
       buttons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
-      // Lógica de filtrado
       const category = btn.getAttribute('data-cat');
       if (category === 'all') {
         renderMarkers(places);
@@ -126,57 +151,61 @@ function initFilters() {
 }
 
 // ==========================================
-// MODAL CONTROL
+// 3. MOSTRAR PAÍS (FUNCIÓN PRINCIPAL ASÍNCRONA)
 // ==========================================
-const resetModal = document.getElementById("resetModal");
-const cancelReset = document.getElementById("cancelReset");
-const confirmReset = document.getElementById("confirmReset");
-
-if(cancelReset) cancelReset.onclick = () => resetModal.classList.add("hidden");
-
-function openResetModal() {
-  if(resetModal) resetModal.classList.remove("hidden");
-}
-
-if(confirmReset) confirmReset.onclick = () => {
-  resetModal.classList.add("hidden");
-  executePassportReset();
-};
-
-// ==========================================
-// 3. MOSTRAR PAÍS (INTERFAZ + CANVAS)
-// ==========================================
-function showPlace(place, markerRef = null) {
-  // Gestión visual del marcador
+async function showPlace(place, markerRef = null) {
   if (activeMarker) activeMarker.setOpacity(1);
   if (markerRef) {
     activeMarker = markerRef;
     activeMarker.setOpacity(0.5);
   }
 
-  // Pasaporte
   if (!visitedCountries.includes(place.country)) {
     visitedCountries.push(place.country);
-    saveVisited(); // Guardar progreso real
+    saveVisited();
     updatePassport();
   }
 
   const isVisited = visitedCountries.includes(place.country);
   const badgeHTML = isVisited ? '<span class="visited-tag">✅ Visitado</span>' : '';
 
-  // Parar audio anterior
   fadeOutAndStop();
 
   const info = document.getElementById('info');
+  info.innerHTML = `<div style="text-align:center; padding:20px; color:#a9b4c0;">☁️ Conectando con satélite...</div>`;
+
+  const weatherData = await getWeather(place.lat, place.lng);
   
-  // HTML (INCLUYE CATEGORÍA Y CANVAS VISUALIZADOR)
+  let weatherHTML = "";
+  if (weatherData) {
+    const icon = getWeatherIcon(weatherData.code);
+    const localTime = weatherData.time.split("T")[1]; 
+    
+    weatherHTML = `
+      <div class="weather-widget">
+        <div class="weather-info">
+          <span class="weather-icon">${icon}</span>
+          <span>${weatherData.temp}°C</span>
+        </div>
+        <div class="local-time">
+          Hora local
+          <span>${localTime}</span>
+        </div>
+      </div>
+    `;
+  }
+
   info.innerHTML = `
     <h2>${place.country} ${badgeHTML}</h2>
+    
     <div style="margin-bottom:5px;">
       <span style="font-size:0.8rem; background:#232a34; padding:2px 6px; border-radius:4px; color:#a9b4c0;">
         ${place.category ? place.category.toUpperCase() : 'GENERAL'}
       </span>
     </div>
+
+    ${weatherHTML}
+
     <img src="${place.image}" alt="${place.country}" onerror="this.style.display='none'"/>
     <p>${place.description}</p>
     
@@ -195,69 +224,58 @@ function showPlace(place, markerRef = null) {
     </div>
   `;
 
-  // Asignar eventos
   document.getElementById('playBtn').onclick  = () => startAudio(place.sound);
   document.getElementById('pauseBtn').onclick = pauseAudio;
 
-  // Evento Volumen
   const slider = document.getElementById('volSlider');
-  slider.addEventListener('input', (e) => {
-    globalVolume = parseFloat(e.target.value);
-    if (currentAudio) currentAudio.volume = globalVolume;
-  });
+  if(slider) {
+    slider.addEventListener('input', (e) => {
+      globalVolume = parseFloat(e.target.value);
+      if (currentAudio) currentAudio.volume = globalVolume;
+    });
+  }
 
   map.flyTo([place.lat, place.lng], 5, { duration: 1.5 });
 }
 
 // ==========================================
-// 4. AUDIO & VISUALIZADOR (WEB AUDIO API)
+// 4. AUDIO & VISUALIZADOR
 // ==========================================
 function startAudio(src) {
   try {
-    fadeOutAndStop(); // Limpieza previa
+    fadeOutAndStop();
 
-    // 1. Inicializar contexto si no existe
     if (!audioContext) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // 2. Crear elemento de audio
     currentAudio = new Audio(src);
-    currentAudio.crossOrigin = "anonymous"; // Vital para el canvas
+    currentAudio.crossOrigin = "anonymous"; 
     currentAudio.volume = 0; 
     currentAudio.loop = true;
 
-    // 3. Conectar los "cables" para el visualizador
     source = audioContext.createMediaElementSource(currentAudio);
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 128; // Cantidad de barras
+    analyser.fftSize = 128; 
     
-    // Conectar: Fuente -> Analizador -> Altavoces
     source.connect(analyser);
     analyser.connect(audioContext.destination);
 
-    // Preparar array de datos
     const bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
 
-    // 4. Reproducir
     const playPromise = currentAudio.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
         fadeTo(globalVolume, 500);
-        // INICIAR ANIMACIÓN
         drawVisualizer();
       }).catch(e => console.warn(e));
     }
 
-    // Reactivar contexto si estaba suspendido (política de navegadores)
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
+    if (audioContext.state === 'suspended') audioContext.resume();
 
   } catch (e) { 
     console.error("Error AudioContext:", e);
-    // Fallback por si falla el visualizador
     if(currentAudio) currentAudio.play();
   }
 }
@@ -270,29 +288,20 @@ function drawVisualizer() {
   const width = canvas.width;
   const height = canvas.height;
 
-  // Loop de animación
   animationId = requestAnimationFrame(drawVisualizer);
-
-  // Obtener datos
   analyser.getByteFrequencyData(dataArray);
-
-  // Limpiar lienzo
   ctx.clearRect(0, 0, width, height);
 
-  // Dibujar barras
   const barWidth = (width / dataArray.length) * 2.5;
   let barHeight;
   let x = 0;
 
   for (let i = 0; i < dataArray.length; i++) {
     barHeight = dataArray[i] / 255 * height;
-
-    // Color dinámico (Azul a Verde)
     const r = 31;
     const g = 111 + (barHeight * 2);
     const b = 235;
     ctx.fillStyle = `rgb(${r},${g},${b})`;
-    
     ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
     x += barWidth;
   }
@@ -312,14 +321,12 @@ function stopSound() {
 }
 
 function fadeOutAndStop() {
-  // Parar animación visual inmediatamente
   if (animationId) cancelAnimationFrame(animationId);
   
   if (!currentAudio) return;
   const soundToKill = currentAudio; 
   currentAudio = null; 
   
-  // Fade out manual
   let vol = soundToKill.volume;
   const fadeOut = setInterval(() => {
     vol -= 0.1;
@@ -327,7 +334,6 @@ function fadeOutAndStop() {
       clearInterval(fadeOut);
       try { 
         soundToKill.pause(); 
-        // Desconectar nodos para liberar memoria
         if(source) { source.disconnect(); source = null; }
       } catch(e){}
     } else {
@@ -352,7 +358,7 @@ function fadeTo(targetVol, ms) {
 }
 
 // ==========================================
-// 5. UTILIDADES Y BUSCADOR
+// 5. UTILIDADES (Pasaporte, Random, Search, Modal)
 // ==========================================
 function updatePassport() {
   const total = places.length; 
@@ -365,7 +371,6 @@ function updatePassport() {
 }
 
 function goRandom() {
-  // Solo elegir entre los visibles (filtrados)
   const visiblePlaces = markers.map(m => m.placeData);
   if (!visiblePlaces.length) { alert("No hay países visibles"); return; }
   
@@ -416,11 +421,10 @@ function selectSearchedCountry(countryName) {
   const place = places.find(p => p.country === countryName);
   if (!place) return;
   
-  // Buscar marcador (aunque esté oculto por filtro, forzamos mostrarlo)
   let marker = markers.find(m => m.placeData === place);
   if (!marker) {
-    document.querySelector('.filter-btn[data-cat="all"]').click(); // Reset filtros
-    renderMarkers(places); // Forzar render
+    document.querySelector('.filter-btn[data-cat="all"]').click(); 
+    renderMarkers(places); 
     setTimeout(() => {
        marker = markers.find(m => m.placeData === place);
        if(marker) showPlace(place, marker);
@@ -435,12 +439,31 @@ function selectSearchedCountry(countryName) {
   if(results) results.style.display = 'none';
 }
 
-// ABRIR MODAL
+// ==========================================
+// LÓGICA DEL MODAL DE REINICIO (CORREGIDA)
+// ==========================================
+const resetModal = document.getElementById("resetModal");
+const cancelReset = document.getElementById("cancelReset");
+const confirmReset = document.getElementById("confirmReset");
+
+// Botón Cancelar
+if(cancelReset) cancelReset.onclick = () => resetModal.classList.add("hidden");
+
+// Función para abrir
+function openResetModal() {
+  if(resetModal) resetModal.classList.remove("hidden");
+}
+
 function resetPassport() {
   openResetModal();
 }
 
-// EJECUTAR RESETEO REAL
+// 🔥 AQUÍ ESTABA EL ERROR: Faltaba conectar el botón de confirmar
+if(confirmReset) confirmReset.onclick = () => {
+  resetModal.classList.add("hidden");
+  executePassportReset();
+};
+
 function executePassportReset() {
   visitedCountries = [];
   saveVisited();

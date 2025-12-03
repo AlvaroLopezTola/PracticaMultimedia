@@ -29,7 +29,7 @@ body{
   height:100vh;
 }
 
-/* --- NUEVO: WRAPPER PARA MAPA Y FILTROS --- */
+/* --- WRAPPER PARA MAPA Y FILTROS --- */
 .map-wrapper {
   position: relative;
   width: 100%;
@@ -38,7 +38,7 @@ body{
 
 #map{width:100%;height:100%; z-index: 1;}
 
-/* --- NUEVO: BOTONES FLOTANTES (FILTROS) --- */
+/* --- BOTONES FLOTANTES (FILTROS) --- */
 .filter-controls {
   position: absolute;
   top: 20px;
@@ -72,7 +72,6 @@ body{
   background: rgba(255,255,255,0.1);
 }
 
-/* Estilo para el botón activo */
 .filter-btn.active {
   background: var(--primary);
   color: #fff;
@@ -97,7 +96,7 @@ body{
 }
 #info p{color:var(--muted);line-height:1.45;margin:.25rem 0 .75rem}
 
-/* Images in card */
+/* Imagen del país */
 #info img{
   width:100%;
   height:180px;
@@ -105,6 +104,45 @@ body{
   border-radius:12px;
   margin:8px 0;
   border:1px solid var(--border);
+}
+
+/* --- NUEVO: WIDGET DE CLIMA Y HORA --- */
+.weather-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(31, 111, 235, 0.1); /* Azul muy suave */
+  border: 1px solid rgba(31, 111, 235, 0.3);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  font-size: 0.9rem;
+}
+
+.weather-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.weather-icon {
+  font-size: 1.4rem;
+}
+
+.local-time {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.local-time span {
+  display: block;
+  color: var(--text);
+  font-weight: bold;
+  font-size: 1rem;
 }
 
 /* ===== Controls ===== */
@@ -128,7 +166,6 @@ button:focus-visible{
   box-shadow:0 0 0 3px rgba(31,111,235,.55);
 }
 
-/* Secondary style for Pause/Stop if quieres diferenciar */
 #stopBtn{background:#303b47}
 #pauseBtn{background:#303b47}
 
@@ -312,7 +349,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   background: #fff;
 }
 
-/* --- NUEVO: ESTILOS DEL CANVAS (VISUALIZADOR) --- */
+/* --- CANVAS (VISUALIZADOR) --- */
 canvas#audioVisualizer {
   width: 100%;
   height: 80px;
@@ -320,7 +357,7 @@ canvas#audioVisualizer {
   border-radius: 8px;
   margin-top: 15px;
   border-bottom: 2px solid var(--primary);
-  display: block; /* Para evitar espacios extra */
+  display: block; 
 }
 
 /* ===== Reset Passport Button ===== */
@@ -516,5 +553,3 @@ canvas#audioVisualizer {
   0%   { transform: scale(1.25) translate(30px, 20px); }
   100% { transform: scale(1.35) translate(-60px, 10px); }
 }
-
-
