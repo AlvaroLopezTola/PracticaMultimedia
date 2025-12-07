@@ -216,7 +216,9 @@ async function showPlace(place, markerRef = null) {
   let weatherHTML = "";
   if (weatherData) {
     const icon = getWeatherIcon(weatherData.code);
-    const localTime = weatherData.time.split("T")[1]; 
+    // Extraer hora y minutos del formato HH:MM:SS
+    const fullTime = weatherData.time.split("T")[1];
+    const localTime = fullTime.substring(0, 5); // HH:MM
     
     weatherHTML = `
       <div class="weather-widget">
@@ -235,16 +237,31 @@ async function showPlace(place, markerRef = null) {
   info.innerHTML = `
     <h2>${place.country} ${badgeHTML}</h2>
     
-    <div style="margin-bottom:5px;">
+    <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
       <span style="font-size:0.8rem; background:#232a34; padding:2px 6px; border-radius:4px; color:#a9b4c0;">
         ${place.category ? place.category.toUpperCase() : 'GENERAL'}
       </span>
+      <button id="speakBtn" class="speak-btn" title="Escuchar información">🔊 Escuchar</button>
     </div>
 
     ${weatherHTML}
 
+    <!-- ZONA HORARIA -->
+    ${place.timezone ? `
+      <div class="info-widget timezone-widget">
+        <span>🕐 Zona horaria: <strong>${place.timezone.split('/')[1]}</strong></span>
+      </div>
+    ` : ''}
+
     <img src="${place.image}" alt="${place.country}" onerror="this.style.display='none'"/>
     <p>${place.description}</p>
+
+    <!-- TRIVIA -->
+    ${place.trivia ? `
+      <div class="trivia-box">
+        <p style="margin:0; font-size:0.9rem; color:#34d399;">💡 ${place.trivia}</p>
+      </div>
+    ` : ''}
     
     <div class="audio-controls" style="margin-top:10px;">
       <!-- BOTONES PRINCIPALES -->
@@ -299,6 +316,12 @@ async function showPlace(place, markerRef = null) {
   document.getElementById('favBtn').onclick = () => toggleFavorite(place);
   document.getElementById('loopBtn').onclick = toggleLoop;
   document.getElementById('vizModeBtn').onclick = toggleVisualizerMode;
+  
+  // Botón para síntesis de voz
+  const speakBtn = document.getElementById('speakBtn');
+  if (speakBtn) {
+    speakBtn.onclick = () => speakPlaceInfo(place);
+  }
 
   // Ecualizador
   const bassSlider = document.getElementById('bassSlider');
@@ -994,6 +1017,57 @@ function updateThemeButton() {
     themeToggleBtn.title = currentTheme === 'dark' 
       ? 'Cambiar a tema claro' 
       : 'Cambiar a tema oscuro';
+  }
+}
+
+// ==========================================
+// INFORMACIÓN ENRIQUECIDA Y SÍNTESIS DE VOZ
+// ==========================================
+function speakPlaceInfo(place) {
+  // Cancelar cualquier síntesis anterior
+  speechSynthesis.cancel();
+  
+  // Preparar el texto a pronunciar
+  let textToSpeak = `${place.country}. ${place.description}. `;
+  
+  if (place.trivia) {
+    textToSpeak += `Dato curioso: ${place.trivia}. `;
+  }
+  
+  if (place.timezone) {
+    const tzName = place.timezone.split('/')[1];
+    textToSpeak += `La zona horaria es ${tzName}. `;
+  }
+
+  // Crear utterance para síntesis de voz
+  const utterance = new SpeechSynthesisUtterance(textToSpeak);
+  utterance.lang = 'es-ES'; // Español
+  utterance.rate = 0.9; // Velocidad normal
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  // Reproducir
+  speechSynthesis.speak(utterance);
+  
+  // Actualizar botón mientras se está hablando
+  const speakBtn = document.getElementById('speakBtn');
+  if (speakBtn) {
+    speakBtn.style.background = '#10b981';
+    speakBtn.textContent = '⏸ Deteniendo...';
+    
+    utterance.onend = () => {
+      speakBtn.style.background = '';
+      speakBtn.textContent = '🔊 Escuchar';
+    };
+  }
+}
+
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  const speakBtn = document.getElementById('speakBtn');
+  if (speakBtn) {
+    speakBtn.style.background = '';
+    speakBtn.textContent = '🔊 Escuchar';
   }
 }
 
