@@ -1451,29 +1451,56 @@ function downloadCountriesList() {
 }
 
 function generatePassportQR() {
-  // Crear URL con datos del pasaporte
+  // Crear datos del pasaporte en JSON
   const passportData = {
-    países: visitedCountries,
-    total: visitedCountries.length,
-    fecha: new Date().toISOString(),
-    app: 'SoundTrip'
+    app: 'SoundTrip',
+    version: '1.0',
+    timestamp: new Date().toISOString(),
+    date: new Date().toLocaleDateString('es-ES'),
+    time: new Date().toLocaleTimeString('es-ES'),
+    summary: {
+      totalVisited: visitedCountries.length,
+      totalCountries: 10,
+      percentage: Math.round((visitedCountries.length / 10) * 100)
+    },
+    countries: visitedCountries,
+    remainingCountries: places.filter(p => !visitedCountries.includes(p.country)).map(p => p.country)
   };
   
-  const qrText = `SoundTrip Passport: ${visitedCountries.length}/10 países visitados - ${visitedCountries.join(', ') || 'Ninguno aún'}`;
+  // Crear un blob con los datos JSON
+  const jsonString = JSON.stringify(passportData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  // Crear enlace de descarga y convertirlo a data URL para el QR
+  const fileName = `soundtrip-passport-${new Date().getTime()}.json`;
+  
+  // Para el QR, vamos a usar la URL del blob (esto permitirá descargar)
+  // Pero como los QR externos no pueden acceder a URLs de blob, 
+  // usaremos un formato de texto que el usuario pueda copiar/usar
+  const qrText = `SoundTrip Passport Data:\n${jsonString}`;
   
   // Limpiar container anterior
   const qrContainer = document.getElementById('qrContainer');
   qrContainer.innerHTML = '';
   
-  // Generar QR
-  new QRCode(qrContainer, {
-    text: qrText,
-    width: 250,
-    height: 250,
-    colorDark: '#1f6feb',
-    colorLight: '#f5f7fa',
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  // Usar servicio QR externo (qrserver.com)
+  const encodedText = encodeURIComponent(qrText);
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedText}`;
+  
+  // Crear imagen del QR
+  const qrImg = document.createElement('img');
+  qrImg.src = qrImageUrl;
+  qrImg.alt = 'Código QR del pasaporte';
+  qrImg.style.borderRadius = '8px';
+  qrImg.style.border = '2px solid var(--border)';
+  qrImg.id = 'qrImage';
+  
+  qrContainer.appendChild(qrImg);
+  
+  // Guardar referencia al blob para la descarga
+  window.passportBlob = blob;
+  window.passportFileName = fileName;
   
   // Actualizar contador
   document.getElementById('qrCountries').textContent = visitedCountries.length;
@@ -1484,37 +1511,51 @@ function generatePassportQR() {
 }
 
 function downloadQRImage() {
-  const qrCanvas = document.querySelector('#qrContainer canvas');
-  if (qrCanvas) {
+  // Opción 1: Descargar el JSON del pasaporte (mejor alternativa)
+  if (window.passportBlob && window.passportFileName) {
     const link = document.createElement('a');
-    link.href = qrCanvas.toDataURL('image/png');
+    link.href = URL.createObjectURL(window.passportBlob);
+    link.download = window.passportFileName;
+    link.click();
+    return;
+  }
+  
+  // Opción 2: Si falla, descargar la imagen QR
+  const qrImg = document.getElementById('qrImage');
+  if (qrImg && qrImg.src) {
+    const link = document.createElement('a');
+    link.href = qrImg.src;
     link.download = `soundtrip-qr-${new Date().getTime()}.png`;
     link.click();
   }
 }
 
 function downloadCSV() {
+  // BOM para UTF-8 (necesario para Excel reconozca los caracteres especiales)
+  const BOM = '\uFEFF';
+  
   // Preparar datos CSV
-  let csvContent = "País,Visitado,Categoría,Zona Horaria\n";
+  let csvContent = 'País,Visitado,Categoría,Zona Horaria\n';
   
   places.forEach(place => {
     const isVisited = visitedCountries.includes(place.country) ? 'Sí' : 'No';
     const category = place.category || 'General';
-    const timezone = place.timezone || 'N/A';
+    const timezone = place.timezone ? place.timezone.split('/')[1] : 'N/A';
     
-    csvContent += `"${place.country}","${isVisited}","${category}","${timezone}"\n`;
+    csvContent += `${place.country},${isVisited},${category},${timezone}\n`;
   });
   
   // Agregar resumen
-  csvContent += "\n";
-  csvContent += `"RESUMEN","","",\n`;
-  csvContent += `"Total visitados","${visitedCountries.length}","",\n`;
-  csvContent += `"Total por visitar","${places.length - visitedCountries.length}","",\n`;
-  csvContent += `"Porcentaje completado","${Math.round((visitedCountries.length / places.length) * 100)}%","",\n`;
-  csvContent += `"Fecha de exportación","${new Date().toLocaleString('es-ES')}","",\n`;
+  csvContent += '\n';
+  csvContent += `RESUMEN,,,\n`;
+  csvContent += `Total visitados,${visitedCountries.length},,\n`;
+  csvContent += `Total por visitar,${places.length - visitedCountries.length},,\n`;
+  csvContent += `Porcentaje completado,${Math.round((visitedCountries.length / places.length) * 100)}%,,\n`;
+  csvContent += `Fecha de exportación,${new Date().toLocaleString('es-ES')},,\n`;
+  csvContent += `Países visitados,${visitedCountries.join('; ')},,\n`;
   
-  // Crear y descargar archivo
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  // Crear y descargar archivo con BOM
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `soundtrip-datos-${new Date().getTime()}.csv`;
