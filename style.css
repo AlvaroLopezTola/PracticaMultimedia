@@ -456,6 +456,36 @@ canvas#audioVisualizer {
 .modal-btn.confirm { background: #b30000; color: white; box-shadow: 0 4px 14px rgba(179,0,0,0.35); }
 .modal-btn:hover { opacity: .9; }
 
+/* ===== VIAJE VIRTUAL GUIADO ===== */
+.continents-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.continent-btn {
+  padding: 16px;
+  border: 2px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.continent-btn:hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.continent-btn:active {
+  transform: translateY(0);
+}
+
 /* ===========================
    SPLASH SCREEN
    =========================== */

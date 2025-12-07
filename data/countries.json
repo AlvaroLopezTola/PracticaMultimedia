@@ -8,7 +8,8 @@
     "description": "Ambiente urbano de Madrid y olas mediterráneas.",
     "category": "urbano",
     "timezone": "Europe/Madrid",
-    "trivia": "España es el país con más sitios patrimonio de la UNESCO en Europa, con 48 lugares registrados. La Tomatina es una fiesta de Buñol donde los participantes se tiran tomates unos a otros."
+    "trivia": "España es el país con más sitios patrimonio de la UNESCO en Europa, con 48 lugares registrados. La Tomatina es una fiesta de Buñol donde los participantes se tiran tomates unos a otros.",
+    "continent": "europe"
   },
   {
     "country": "Japan",
@@ -19,7 +20,8 @@
     "description": "Trenes bala, cruce de Shibuya y calma en templos.",
     "category": "urbano",
     "timezone": "Asia/Tokyo",
-    "trivia": "Japón tiene más de 100 volcanes activos. El cruce de Shibuya es uno de los lugares más concurridos del mundo, con hasta 3,000 personas cruzando cada vez que cambia el semáforo."
+    "trivia": "Japón tiene más de 100 volcanes activos. El cruce de Shibuya es uno de los lugares más concurridos del mundo, con hasta 3,000 personas cruzando cada vez que cambia el semáforo.",
+    "continent": "asia"
   },
   {
     "country": "Brazil",
@@ -30,7 +32,8 @@
     "description": "Selva, olas de Copacabana y ritmos cariocas.",
     "category": "naturaleza",
     "timezone": "America/Sao_Paulo",
-    "trivia": "El Amazonas produce el 20% del oxígeno mundial. Brasil tiene la mayor biodiversidad del planeta con más de 1,3 millones de especies animales registradas."
+    "trivia": "El Amazonas produce el 20% del oxígeno mundial. Brasil tiene la mayor biodiversidad del planeta con más de 1,3 millones de especies animales registradas.",
+    "continent": "america"
   },
   {
     "country": "France",
@@ -41,7 +44,8 @@
     "description": "Callejeo parisino, acordeón y cafés.",
     "category": "cultura",
     "timezone": "Europe/Paris",
-    "trivia": "Francia recibe más de 89 millones de turistas al año, más que cualquier otro país. La Torre Eiffel pesa 10,100 toneladas y se inclina ligeramente hacia el sol."
+    "trivia": "Francia recibe más de 89 millones de turistas al año, más que cualquier otro país. La Torre Eiffel pesa 10,100 toneladas y se inclina ligeramente hacia el sol.",
+    "continent": "europe"
   },
   {
     "country": "UK",
@@ -52,7 +56,8 @@
     "description": "Lluvia suave, metro y campanadas.",
     "category": "urbano",
     "timezone": "Europe/London",
-    "trivia": "Big Ben no es el nombre de la torre, sino del campanario. El Museo Británico alberga 8 millones de objetos, más que cualquier otro museo del mundo."
+    "trivia": "Big Ben no es el nombre de la torre, sino del campanario. El Museo Británico alberga 8 millones de objetos, más que cualquier otro museo del mundo.",
+    "continent": "europe"
   },
   {
     "country": "Italy",
@@ -63,7 +68,8 @@
     "description": "Plazas, fuentes y scooters.",
     "category": "cultura",
     "timezone": "Europe/Rome",
-    "trivia": "Italia tiene 58 sitios patrimonio de la UNESCO, el tercero en el mundo. La Fontana de Trevi recibe más de un millón de visitantes al mes."
+    "trivia": "Italia tiene 58 sitios patrimonio de la UNESCO, el tercero en el mundo. La Fontana de Trevi recibe más de un millón de visitantes al mes.",
+    "continent": "europe"
   },
   {
     "country": "USA",
@@ -74,7 +80,8 @@
     "description": "Rascacielos, tráfico y sirenas.",
     "category": "urbano",
     "timezone": "America/New_York",
-    "trivia": "Nueva York tiene más de 8 millones de habitantes. El Central Park es tan grande que tiene su propio ecosistema con más de 1,000 especies de animales."
+    "trivia": "Nueva York tiene más de 8 millones de habitantes. El Central Park es tan grande que tiene su propio ecosistema con más de 1,000 especies de animales.",
+    "continent": "america"
   },
   {
     "country": "Mexico",
@@ -85,7 +92,8 @@
     "description": "Mariachi, mercados y callejones.",
     "category": "cultura",
     "timezone": "America/Mexico_City",
-    "trivia": "México es el hogar de la Pirámide de Chichén Itzá, una de las nuevas maravillas del mundo. Tenochtitlán, la antigua capital azteca, fue la ciudad más grande del mundo en su época."
+    "trivia": "México es el hogar de la Pirámide de Chichén Itzá, una de las nuevas maravillas del mundo. Tenochtitlán, la antigua capital azteca, fue la ciudad más grande del mundo en su época.",
+    "continent": "america"
   },
   {
     "country": "India",
@@ -96,7 +104,8 @@
     "description": "Tráfico, templos y rezos lejanos.",
     "category": "cultura",
     "timezone": "Asia/Kolkata",
-    "trivia": "India es el país más poblado del mundo con más de 1,400 millones de habitantes. El Taj Mahal fue construido en 22 años y es considerado el símbolo del amor eterno."
+    "trivia": "India es el país más poblado del mundo con más de 1,400 millones de habitantes. El Taj Mahal fue construido en 22 años y es considerado el símbolo del amor eterno.",
+    "continent": "asia"
   },
   {
     "country": "Australia",
@@ -107,6 +116,7 @@
     "description": "Costa, gaviotas y vida marina.",
     "category": "naturaleza",
     "timezone": "Australia/Sydney",
-    "trivia": "Australia es el país más grande del mundo en superficie ocupada por un país. La Gran Barrera de Coral es el arrecife de coral más grande del mundo, visible desde el espacio."
+    "trivia": "Australia es el país más grande del mundo en superficie ocupada por un país. La Gran Barrera de Coral es el arrecife de coral más grande del mundo, visible desde el espacio.",
+    "continent": "oceania"
   }
 ]

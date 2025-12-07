@@ -95,6 +95,7 @@
 
       <div class="controls">
         <button id="randomBtn">Viaje aleatorio</button>
+        <button id="guidedTourBtn" style="background:#8b5cf6">✈️ Viaje Guiado</button>
         <button id="stopBtn" style="background:#303b47">Parar sonido</button>
       </div>
     </aside>
@@ -108,6 +109,25 @@
       <div class="modal-buttons">
         <button id="cancelReset" class="modal-btn cancel">Cancelar</button>
         <button id="confirmReset" class="modal-btn confirm">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="guidedTourModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>✈️ Viaje Virtual Guiado</h2>
+      <p>Selecciona un continente para iniciar un viaje automático con narración:</p>
+
+      <div class="continents-grid" id="continentsGrid">
+        <button class="continent-btn" data-continent="europe">🇪🇺 Europa</button>
+        <button class="continent-btn" data-continent="asia">🌏 Asia</button>
+        <button class="continent-btn" data-continent="america">🌎 América</button>
+        <button class="continent-btn" data-continent="africa">🌍 África</button>
+        <button class="continent-btn" data-continent="oceania">🏝️ Oceanía</button>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="cancelGuidedTour" class="modal-btn cancel">Cancelar</button>
       </div>
     </div>
   </div>

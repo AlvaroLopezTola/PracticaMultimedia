@@ -109,10 +109,16 @@ async function init() {
   const randomBtn = document.getElementById('randomBtn');
   const stopBtn = document.getElementById('stopBtn');
   const resetBtn = document.getElementById("resetPassportBtn");
+  const guidedTourBtn = document.getElementById('guidedTourBtn');
   
   if(randomBtn) randomBtn.onclick = goRandom;
   if(stopBtn) stopBtn.onclick = stopSound;
   if(resetBtn) resetBtn.onclick = resetPassport;
+  if(guidedTourBtn) {
+    guidedTourBtn.onclick = () => {
+      document.getElementById('guidedTourModal').classList.remove('hidden');
+    };
+  }
 
   // F. Inicializar UI
   updatePassport();
@@ -121,6 +127,7 @@ async function init() {
   initTabs();
   initFavorites();
   initCollections();
+  initGuidedTour();
 }
 
 // ==========================================
@@ -641,6 +648,7 @@ function pauseAudio() {
 function stopSound() {
   fadeOutAndStop();
   stopTimeUpdate();
+  stopGuidedTour();
   if (activeMarker) {
     activeMarker.setOpacity(1);
     activeMarker = null;
@@ -1169,5 +1177,155 @@ function stopSpeaking() {
     speakBtn.style.background = '';
     speakBtn.textContent = '🔊 Escuchar';
   }
+}
+
+// ==========================================
+// 9. VIAJE VIRTUAL GUIADO ✈️
+// ==========================================
+
+let guidedTourActive = false;
+let guidedTourCountries = [];
+let currentTourIndex = 0;
+let guidedTourTimeout = null;
+
+const CONTINENTS_MAP = {
+  europe: ["Spain", "France", "UK", "Italy"],
+  asia: ["Japan", "India"],
+  america: ["USA", "Brazil", "Mexico"],
+  africa: [],
+  oceania: ["Australia"]
+};
+
+function initGuidedTour() {
+  const modal = document.getElementById('guidedTourModal');
+  const buttons = document.querySelectorAll('.continent-btn');
+  
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const continent = btn.getAttribute('data-continent');
+      startGuidedTour(continent);
+      modal.classList.add('hidden');
+    });
+  });
+  
+  const cancelBtn = document.getElementById('cancelGuidedTour');
+  cancelBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+}
+
+function startGuidedTour(continent) {
+  // Obtener países del continente
+  const countriesNames = CONTINENTS_MAP[continent];
+  
+  if (countriesNames.length === 0) {
+    alert('No hay países disponibles en este continente.');
+    return;
+  }
+  
+  // Filtrar los lugares que corresponden al continente
+  guidedTourCountries = places.filter(place => countriesNames.includes(place.country));
+  
+  if (guidedTourCountries.length === 0) {
+    alert('No se encontraron países en este continente.');
+    return;
+  }
+  
+  guidedTourActive = true;
+  currentTourIndex = 0;
+  
+  // Mostrar el primer país
+  showGuidedTourPlace();
+}
+
+function showGuidedTourPlace() {
+  if (currentTourIndex >= guidedTourCountries.length) {
+    // Fin del viaje
+    endGuidedTour();
+    return;
+  }
+  
+  const place = guidedTourCountries[currentTourIndex];
+  
+  // Hacer clic en el marcador para mostrar el país
+  const marker = markers.find(m => m.place === place);
+  if (marker) {
+    marker.openPopup();
+    setTimeout(() => {
+      showPlace(place, marker);
+    }, 500);
+  }
+  
+  // Narración de transición
+  if (currentTourIndex > 0) {
+    narrateTourTransition(place);
+  } else {
+    narrateTourStart(place);
+  }
+  
+  // Reproducir sonido del país por 8 segundos
+  const duration = currentTourIndex === guidedTourCountries.length - 1 ? 6000 : 8000;
+  
+  guidedTourTimeout = setTimeout(() => {
+    currentTourIndex++;
+    showGuidedTourPlace();
+  }, duration);
+}
+
+function narrateTourStart(place) {
+  const continentEmojis = {
+    europe: '🇪🇺',
+    asia: '🌏',
+    america: '🌎',
+    africa: '🌍',
+    oceania: '🏝️'
+  };
+  
+  const emoji = continentEmojis[place.continent] || '🌍';
+  
+  const text = `Comenzamos nuestro viaje virtual en ${place.country}. ${emoji}`;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-ES';
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
+}
+
+function narrateTourTransition(place) {
+  const text = `Ahora volamos hacia ${place.country}. Disfrutemos de su sonido único.`;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-ES';
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
+}
+
+function stopGuidedTour() {
+  if (guidedTourActive) {
+    guidedTourActive = false;
+    if (guidedTourTimeout) {
+      clearTimeout(guidedTourTimeout);
+      guidedTourTimeout = null;
+    }
+    speechSynthesis.cancel();
+  }
+}
+
+function endGuidedTour() {
+  guidedTourActive = false;
+  guidedTourCountries = [];
+  currentTourIndex = 0;
+  
+  stopAudio();
+  
+  const text = 'Fin del viaje virtual. ¡Gracias por viajar con nosotros alrededor del mundo!';
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-ES';
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
+  
+  // Mostrar información en el panel
+  const infoPanel = document.getElementById('info');
+  infoPanel.innerHTML = '<p style="color: #10b981; font-weight: 600;">✈️ Viaje completado. Puedes explorar más países o iniciar otro viaje.</p>';
 }
 
