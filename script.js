@@ -24,6 +24,10 @@ let countryVolumes = JSON.parse(localStorage.getItem("soundtrip_volumes") || "{}
 let currentCountry = null;
 let canvasAnimationMode = 'bars'; // 'bars', 'wave', 'circular'
 
+// VARIABLES PARA ZONA HORARIA
+let currentTimezoneOffset = 0;
+let timezoneUpdateInterval = null;
+
 // ==========================================
 // CONFIGURACIÓN Y PERSISTENCIA PASAPORTE
 // ==========================================
@@ -152,22 +156,93 @@ function getWeatherIcon(code) {
 
 function getLocalTimeString(timeString, timezone) {
   try {
-    // Parsear la fecha y hora UTC
-    const dateObj = new Date(timeString + 'Z');
+    // El timeString ya viene en la zona horaria local desde el API
+    // Solo necesitamos extraer hora y minutos
+    // Formato: "2024-12-07T13:15"
+    const timePart = timeString.split('T')[1]; // "13:15"
     
-    // Usar Intl para formatear la hora en la zona horaria correcta
-    const formatter = new Intl.DateTimeFormat('es-ES', {
+    if (timePart && timePart.length >= 5) {
+      return timePart.substring(0, 5); // "13:15"
+    }
+    
+    return timeString.substring(11, 16);
+  } catch (e) {
+    console.error("Error formateando hora:", e);
+    return timeString.substring(11, 16);
+  }
+}
+
+function getCurrentLocalTime(offsetHours) {
+  try {
+    // Obtener hora actual en UTC
+    const now = new Date();
+    
+    // Crear hora en zona horaria local basándose en el offset
+    const utcHours = now.getUTCHours();
+    const utcMinutes = now.getUTCMinutes();
+    
+    let localHours = parseInt(utcHours) + parseInt(offsetHours);
+    let localMinutes = parseInt(utcMinutes);
+    
+    // Ajustar si se pasa de 24 horas o es negativo
+    if (localHours >= 24) {
+      localHours -= 24;
+    } else if (localHours < 0) {
+      localHours += 24;
+    }
+    
+    // Asegurar que son números enteros positivos
+    localHours = Math.max(0, Math.min(23, Math.floor(localHours)));
+    localMinutes = Math.max(0, Math.min(59, Math.floor(localMinutes)));
+    
+    const hoursStr = String(localHours).padStart(2, '0');
+    const minutesStr = String(localMinutes).padStart(2, '0');
+    
+    return `${hoursStr}:${minutesStr}`;
+  } catch (e) {
+    console.error("Error calculando hora local:", e, "offset:", offsetHours);
+    return "00:00";
+  }
+}
+
+function getCurrentLocalTimeByTimezone(timezone) {
+  try {
+    // Usar Intl.DateTimeFormat para obtener la hora en la zona horaria correcta
+    const now = new Date();
+    
+    const formatter = new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
       timeZone: timezone
     });
     
-    return formatter.format(dateObj);
+    return formatter.format(now);
   } catch (e) {
-    console.error("Error formateando hora:", e);
-    // Fallback: extraer la hora del string
-    return timeString.substring(11, 16);
+    console.error("Error formateando hora con Intl:", e);
+    return "00:00";
+  }
+}
+
+function startTimeUpdate(timezone) {
+  // Limpiar intervalo anterior si existe
+  if (timezoneUpdateInterval) {
+    clearInterval(timezoneUpdateInterval);
+  }
+  
+  // Actualizar hora cada segundo
+  timezoneUpdateInterval = setInterval(() => {
+    const timeSpan = document.querySelector('.local-time span');
+    if (timeSpan) {
+      timeSpan.textContent = getCurrentLocalTimeByTimezone(timezone);
+    }
+  }, 1000);
+}
+
+function stopTimeUpdate() {
+  if (timezoneUpdateInterval) {
+    clearInterval(timezoneUpdateInterval);
+    timezoneUpdateInterval = null;
   }
 }
 
@@ -238,8 +313,8 @@ async function showPlace(place, markerRef = null) {
   let weatherHTML = "";
   if (weatherData) {
     const icon = getWeatherIcon(weatherData.code);
-    // Obtener la hora local correcta usando la zona horaria
-    const localTime = getLocalTimeString(weatherData.time, weatherData.timezone);
+    // Obtener la hora actual en la zona horaria local
+    const localTime = getCurrentLocalTimeByTimezone(weatherData.timezone);
     
     weatherHTML = `
       <div class="weather-widget">
@@ -253,6 +328,9 @@ async function showPlace(place, markerRef = null) {
         </div>
       </div>
     `;
+    
+    // Iniciar actualización de hora en tiempo real
+    startTimeUpdate(weatherData.timezone);
   }
 
   info.innerHTML = `
@@ -562,6 +640,7 @@ function pauseAudio() {
 
 function stopSound() {
   fadeOutAndStop();
+  stopTimeUpdate();
   if (activeMarker) {
     activeMarker.setOpacity(1);
     activeMarker = null;
