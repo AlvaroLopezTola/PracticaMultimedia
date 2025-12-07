@@ -19,10 +19,23 @@ let animationId = null;
 // CONFIGURACIÓN Y PERSISTENCIA PASAPORTE
 // ==========================================
 const STORAGE_KEY = "soundtrip_visited";
+const FAVORITES_KEY = "soundtrip_favorites";
+const COLLECTIONS_KEY = "soundtrip_collections";
+
 let visitedCountries = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+let favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+let collections = JSON.parse(localStorage.getItem(COLLECTIONS_KEY) || "{}");
 
 function saveVisited() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedCountries));
+}
+
+function saveFavorites() {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+}
+
+function saveCollections() {
+  localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
 }
 
 let globalVolume = 0.5; 
@@ -84,6 +97,9 @@ async function init() {
   updatePassport();
   initSearch();
   initFilters();
+  initTabs();
+  initFavorites();
+  initCollections();
 }
 
 // ==========================================
@@ -168,6 +184,10 @@ async function showPlace(place, markerRef = null) {
 
   const isVisited = visitedCountries.includes(place.country);
   const badgeHTML = isVisited ? '<span class="visited-tag">✅ Visitado</span>' : '';
+  const isFavorite = favorites.includes(place.country);
+  const favoriteBtn = isFavorite 
+    ? '<button id="favBtn" style="background: #fbbf24; color: #000;">⭐ En favoritos</button>'
+    : '<button id="favBtn">☆ Añadir a favoritos</button>';
 
   fadeOutAndStop();
 
@@ -215,6 +235,8 @@ async function showPlace(place, markerRef = null) {
         <button id="pauseBtn" style="flex:1; background:#303b47">⏸ Pausa</button>
       </div>
 
+      ${favoriteBtn}
+
       <div class="volume-container">
         <span class="volume-icon">🔊</span>
         <input type="range" id="volSlider" min="0" max="1" step="0.01" value="${globalVolume}">
@@ -226,6 +248,7 @@ async function showPlace(place, markerRef = null) {
 
   document.getElementById('playBtn').onclick  = () => startAudio(place.sound);
   document.getElementById('pauseBtn').onclick = pauseAudio;
+  document.getElementById('favBtn').onclick = () => toggleFavorite(place);
 
   const slider = document.getElementById('volSlider');
   if(slider) {
@@ -477,5 +500,233 @@ function executePassportReset() {
     activeMarker = null;
   }
   stopSound();
+}
+
+// ==========================================
+// SISTEMA DE FAVORITOS Y COLECCIONES
+// ==========================================
+function initTabs() {
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.getAttribute('data-tab');
+      
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      btn.classList.add('active');
+      document.getElementById(`${tabName}-panel`).classList.add('active');
+    });
+  });
+}
+
+function toggleFavorite(place) {
+  const index = favorites.indexOf(place.country);
+  
+  if (index > -1) {
+    favorites.splice(index, 1);
+  } else {
+    favorites.push(place.country);
+  }
+  
+  saveFavorites();
+  updateFavoritesList();
+  
+  // Actualizar botón en tiempo real
+  const favBtn = document.getElementById('favBtn');
+  if (favBtn) {
+    if (favorites.includes(place.country)) {
+      favBtn.textContent = '⭐ En favoritos';
+      favBtn.style.background = '#fbbf24';
+      favBtn.style.color = '#000';
+    } else {
+      favBtn.textContent = '☆ Añadir a favoritos';
+      favBtn.style.background = '';
+      favBtn.style.color = '';
+    }
+  }
+}
+
+function initFavorites() {
+  updateFavoritesList();
+}
+
+function updateFavoritesList() {
+  const favoritesList = document.getElementById('favoritesList');
+  if (!favoritesList) return;
+
+  if (favorites.length === 0) {
+    favoritesList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">No hay favoritos aún. Haz clic en ⭐ para agregar.</p>';
+    return;
+  }
+
+  favoritesList.innerHTML = favorites.map(countryName => {
+    const place = places.find(p => p.country === countryName);
+    if (!place) return '';
+    
+    return `
+      <div class="favorite-item" onclick="selectFavorite('${place.country}')">
+        <img src="${place.image}" alt="${place.country}">
+        <div class="favorite-item-info">
+          <div class="favorite-item-name">${place.country}</div>
+          <div class="favorite-item-category">${place.category || 'General'}</div>
+        </div>
+        <button class="favorite-item-remove" onclick="removeFavorite(event, '${place.country}')">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectFavorite(countryName) {
+  const place = places.find(p => p.country === countryName);
+  if (!place) return;
+  
+  let marker = markers.find(m => m.placeData === place);
+  if (!marker) {
+    document.querySelector('.filter-btn[data-cat="all"]').click();
+    renderMarkers(places);
+    setTimeout(() => {
+      marker = markers.find(m => m.placeData === place);
+      if (marker) showPlace(place, marker);
+    }, 50);
+  } else {
+    showPlace(place, marker);
+  }
+  
+  // Cambiar a tab de info
+  const infoTab = document.querySelector('.tab-btn[data-tab="info"]');
+  if (infoTab) infoTab.click();
+}
+
+function removeFavorite(event, countryName) {
+  event.stopPropagation();
+  const index = favorites.indexOf(countryName);
+  if (index > -1) {
+    favorites.splice(index, 1);
+    saveFavorites();
+    updateFavoritesList();
+  }
+}
+
+// ==========================================
+// COLECCIONES
+// ==========================================
+function initCollections() {
+  const createBtn = document.getElementById('createCollectionBtn');
+  if (createBtn) {
+    createBtn.addEventListener('click', createNewCollection);
+  }
+  
+  const input = document.getElementById('newCollectionName');
+  if (input) {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') createNewCollection();
+    });
+  }
+  
+  updateCollectionsList();
+}
+
+function createNewCollection() {
+  const input = document.getElementById('newCollectionName');
+  if (!input) return;
+  
+  const name = input.value.trim();
+  if (!name) {
+    alert('Ingresa un nombre para la colección');
+    return;
+  }
+  
+  if (collections[name]) {
+    alert('Ya existe una colección con ese nombre');
+    return;
+  }
+  
+  collections[name] = [];
+  saveCollections();
+  input.value = '';
+  updateCollectionsList();
+}
+
+function updateCollectionsList() {
+  const collectionsList = document.getElementById('collectionsList');
+  if (!collectionsList) return;
+
+  const collectionNames = Object.keys(collections);
+  
+  if (collectionNames.length === 0) {
+    collectionsList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px; font-size: 0.9rem;">Crea colecciones para organizar tus países favoritos.</p>';
+    return;
+  }
+
+  collectionsList.innerHTML = collectionNames.map(collName => {
+    const countries = collections[collName] || [];
+    return `
+      <div class="collection-item">
+        <div class="collection-header">
+          <span class="collection-name">${collName}</span>
+          <span class="collection-count">${countries.length}</span>
+        </div>
+        
+        <div class="collection-countries">
+          ${countries.map(country => `
+            <div class="collection-country">
+              ${country}
+              <span class="collection-country-remove" onclick="removeFromCollection(event, '${collName}', '${country}')">✕</span>
+            </div>
+          `).join('') || '<span style="color: var(--muted); font-size: 0.85rem;">Vacía</span>'}
+        </div>
+        
+        <div class="collection-actions">
+          <button class="collection-action-btn" onclick="addToCollectionModal('${collName}')">+ Agregar</button>
+          <button class="collection-action-btn delete" onclick="deleteCollection('${collName}')">Eliminar</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addToCollectionModal(collectionName) {
+  const availableCountries = favorites.filter(c => 
+    !collections[collectionName].includes(c)
+  );
+  
+  if (availableCountries.length === 0) {
+    alert('No hay favoritos disponibles para agregar a esta colección');
+    return;
+  }
+  
+  const selection = prompt(
+    `Agregar a "${collectionName}":\n\n${availableCountries.join(', ')}`,
+    availableCountries[0]
+  );
+  
+  if (selection && availableCountries.includes(selection)) {
+    if (!collections[collectionName].includes(selection)) {
+      collections[collectionName].push(selection);
+      saveCollections();
+      updateCollectionsList();
+    }
+  }
+}
+
+function removeFromCollection(event, collectionName, country) {
+  event.stopPropagation();
+  const index = collections[collectionName].indexOf(country);
+  if (index > -1) {
+    collections[collectionName].splice(index, 1);
+    saveCollections();
+    updateCollectionsList();
+  }
+}
+
+function deleteCollection(collectionName) {
+  if (confirm(`¿Eliminar la colección "${collectionName}"?`)) {
+    delete collections[collectionName];
+    saveCollections();
+    updateCollectionsList();
+  }
 }
 

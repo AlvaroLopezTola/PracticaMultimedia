@@ -50,13 +50,44 @@
       </div>
       <button id="resetPassportBtn" class="reset-btn">🔄 Reiniciar pasaporte</button>
 
-      <div id="info">
-        <p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>
+      <!-- TABS DE FAVORITOS -->
+      <div class="favorites-tabs">
+        <button class="tab-btn active" data-tab="info">ℹ️ Info</button>
+        <button class="tab-btn" data-tab="favorites">⭐ Favoritos</button>
+        <button class="tab-btn" data-tab="collections">📂 Colecciones</button>
       </div>
 
-      <div class="search-container">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar país..." autocomplete="off">
-        <div id="searchResults" class="results-list"></div>
+      <!-- PANEL DE INFO (predeterminado) -->
+      <div id="info-panel" class="tab-content active">
+        <div id="info">
+          <p>Haz clic en un país para escuchar su paisaje sonoro 🌍🎧</p>
+        </div>
+
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="🔍 Buscar país..." autocomplete="off">
+          <div id="searchResults" class="results-list"></div>
+        </div>
+      </div>
+
+      <!-- PANEL DE FAVORITOS -->
+      <div id="favorites-panel" class="tab-content">
+        <div class="favorites-list" id="favoritesList">
+          <p style="color: var(--muted); text-align: center; padding: 20px;">No hay favoritos aún. Haz clic en ⭐ para agregar.</p>
+        </div>
+      </div>
+
+      <!-- PANEL DE COLECCIONES -->
+      <div id="collections-panel" class="tab-content">
+        <div class="collections-section">
+          <div class="add-collection">
+            <input type="text" id="newCollectionName" placeholder="Nueva colección..." autocomplete="off">
+            <button id="createCollectionBtn" style="background: #10b981; padding: 8px 12px; width: 100%; margin-top: 8px;">+ Crear</button>
+          </div>
+          
+          <div class="collections-list" id="collectionsList">
+            <p style="color: var(--muted); text-align: center; padding: 20px; font-size: 0.9rem;">Crea colecciones para organizar tus países favoritos.</p>
+          </div>
+        </div>
       </div>
 
       <div class="controls">
