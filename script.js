@@ -655,6 +655,20 @@ function stopSound() {
   }
 }
 
+function stopAudio() {
+  // Parar audio de forma inmediata para transiciones en viaje guiado
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  if (animationId) cancelAnimationFrame(animationId);
+  if (source) {
+    try { source.disconnect(); } catch(e) {}
+    source = null;
+  }
+}
+
 function fadeOutAndStop() {
   if (animationId) cancelAnimationFrame(animationId);
   
@@ -1251,25 +1265,37 @@ function showGuidedTourPlace() {
   const marker = markers.find(m => m.place === place);
   if (marker) {
     marker.openPopup();
-    setTimeout(() => {
-      showPlace(place, marker);
-    }, 500);
   }
   
-  // Narración de transición
+  // Narración de transición ANTES de mostrar la información
   if (currentTourIndex > 0) {
     narrateTourTransition(place);
   } else {
     narrateTourStart(place);
   }
   
-  // Reproducir sonido del país por 8 segundos
-  const duration = currentTourIndex === guidedTourCountries.length - 1 ? 6000 : 8000;
-  
-  guidedTourTimeout = setTimeout(() => {
-    currentTourIndex++;
-    showGuidedTourPlace();
-  }, duration);
+  // Mostrar la información completa del país de forma asincrónica
+  setTimeout(async () => {
+    await showPlace(place, marker);
+    
+    // Iniciar reproducción automática después de que se cargue la información
+    setTimeout(() => {
+      const playBtn = document.getElementById('playBtn');
+      if (playBtn) {
+        playBtn.click();
+      }
+    }, 500);
+    
+    // Pasar al siguiente país después del tiempo especificado
+    const duration = currentTourIndex === guidedTourCountries.length - 1 ? 10000 : 12000;
+    
+    guidedTourTimeout = setTimeout(() => {
+      // Parar el audio antes de pasar al siguiente país
+      stopAudio();
+      currentTourIndex++;
+      showGuidedTourPlace();
+    }, duration);
+  }, 300);
 }
 
 function narrateTourStart(place) {
@@ -1283,20 +1309,20 @@ function narrateTourStart(place) {
   
   const emoji = continentEmojis[place.continent] || '🌍';
   
-  const text = `Comenzamos nuestro viaje virtual en ${place.country}. ${emoji}`;
+  const text = `Bienvenido a nuestro viaje virtual. Comenzamos explorando ${place.country}. ${emoji} ${place.description}`;
   
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'es-ES';
-  utterance.rate = 1;
+  utterance.rate = 0.95;
   speechSynthesis.speak(utterance);
 }
 
 function narrateTourTransition(place) {
-  const text = `Ahora volamos hacia ${place.country}. Disfrutemos de su sonido único.`;
+  const text = `Nuestro viaje continúa. Ahora nos dirigimos a ${place.country}. ${place.description}`;
   
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'es-ES';
-  utterance.rate = 1;
+  utterance.rate = 0.95;
   speechSynthesis.speak(utterance);
 }
 
@@ -1318,14 +1344,18 @@ function endGuidedTour() {
   
   stopAudio();
   
-  const text = 'Fin del viaje virtual. ¡Gracias por viajar con nosotros alrededor del mundo!';
+  const text = 'Hemos llegado al final de nuestro viaje virtual alrededor del mundo. ¡Esperamos que hayas disfrutado explorando nuevas culturas y sonidos!';
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'es-ES';
-  utterance.rate = 1;
+  utterance.rate = 0.95;
   speechSynthesis.speak(utterance);
   
-  // Mostrar información en el panel
-  const infoPanel = document.getElementById('info');
-  infoPanel.innerHTML = '<p style="color: #10b981; font-weight: 600;">✈️ Viaje completado. Puedes explorar más países o iniciar otro viaje.</p>';
+  // Mostrar información en el panel después de que termine la narración
+  utterance.onend = () => {
+    const infoPanel = document.getElementById('info');
+    if (infoPanel) {
+      infoPanel.innerHTML = '<p style="color: #10b981; font-weight: 600; text-align: center; padding: 20px;">✈️ Viaje completado. ¡Puedes explorar más países o iniciar otro viaje!</p>';
+    }
+  };
 }
 
