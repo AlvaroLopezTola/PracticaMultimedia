@@ -131,7 +131,8 @@ async function getWeather(lat, lng) {
     return {
       temp: data.current_weather.temperature,
       code: data.current_weather.weathercode,
-      time: data.current_weather.time
+      time: data.current_weather.time,
+      timezone: data.timezone
     };
   } catch (e) {
     console.error("Error clima:", e);
@@ -147,6 +148,27 @@ function getWeatherIcon(code) {
   if (code >= 71 && code <= 86) return "❄️"; 
   if (code >= 95) return "⛈️"; 
   return "🌡️";
+}
+
+function getLocalTimeString(timeString, timezone) {
+  try {
+    // Parsear la fecha y hora UTC
+    const dateObj = new Date(timeString + 'Z');
+    
+    // Usar Intl para formatear la hora en la zona horaria correcta
+    const formatter = new Intl.DateTimeFormat('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: timezone
+    });
+    
+    return formatter.format(dateObj);
+  } catch (e) {
+    console.error("Error formateando hora:", e);
+    // Fallback: extraer la hora del string
+    return timeString.substring(11, 16);
+  }
 }
 
 // ==========================================
@@ -216,9 +238,8 @@ async function showPlace(place, markerRef = null) {
   let weatherHTML = "";
   if (weatherData) {
     const icon = getWeatherIcon(weatherData.code);
-    // Extraer hora y minutos del formato HH:MM:SS
-    const fullTime = weatherData.time.split("T")[1];
-    const localTime = fullTime.substring(0, 5); // HH:MM
+    // Obtener la hora local correcta usando la zona horaria
+    const localTime = getLocalTimeString(weatherData.time, weatherData.timezone);
     
     weatherHTML = `
       <div class="weather-widget">
