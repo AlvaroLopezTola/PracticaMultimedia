@@ -51,7 +51,10 @@
           <div id="progress-fill" style="width: 0%"></div>
         </div>
       </div>
-      <button id="resetPassportBtn" class="reset-btn">🔄 Reiniciar pasaporte</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <button id="resetPassportBtn" class="reset-btn" style="flex: 1;">🔄 Reiniciar</button>
+        <button id="exportBtn" class="reset-btn" style="flex: 1; background: #3b82f6;">📤 Exportar</button>
+      </div>
 
       <!-- TABS DE FAVORITOS -->
       <div class="favorites-tabs">
@@ -132,10 +135,56 @@
     </div>
   </div>
 
+  <div id="exportModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>📤 Exportar Pasaporte</h2>
+      <p>Elige cómo deseas compartir tu progreso:</p>
+
+      <div class="export-options">
+        <button id="downloadListBtn" class="export-option-btn">
+          <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">📋</span>
+          Descargar Lista
+        </button>
+        <button id="generateQRBtn" class="export-option-btn">
+          <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">📱</span>
+          Código QR
+        </button>
+        <button id="downloadCSVBtn" class="export-option-btn">
+          <span style="font-size: 1.5rem; display: block; margin-bottom: 8px;">📊</span>
+          Exportar CSV
+        </button>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="cancelExport" class="modal-btn cancel">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>📱 Código QR - Comparte tu Pasaporte</h2>
+      <p>Escanea este código para compartir tu progreso:</p>
+      
+      <div id="qrContainer" style="display: flex; justify-content: center; padding: 20px; background: var(--bg-2); border-radius: 12px; margin: 20px 0;"></div>
+      
+      <p style="text-align: center; font-size: 0.85rem; color: var(--muted);">
+        Países visitados: <strong id="qrCountries">0</strong> / 10
+      </p>
+
+      <div class="modal-buttons">
+        <button id="downloadQRBtn" class="modal-btn confirm" style="background: #10b981;">⬇️ Descargar QR</button>
+        <button id="closeQRModal" class="modal-btn cancel">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script defer
           src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
           crossorigin="anonymous"></script>
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script defer src="script.js"></script>
 

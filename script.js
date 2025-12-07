@@ -128,6 +128,7 @@ async function init() {
   initFavorites();
   initCollections();
   initGuidedTour();
+  initExport();
 }
 
 // ==========================================
@@ -1357,5 +1358,168 @@ function endGuidedTour() {
       infoPanel.innerHTML = '<p style="color: #10b981; font-weight: 600; text-align: center; padding: 20px;">✈️ Viaje completado. ¡Puedes explorar más países o iniciar otro viaje!</p>';
     }
   };
+}
+
+// ==========================================
+// 10. EXPORTAR/COMPARTIR 📤
+// ==========================================
+
+function initExport() {
+  const exportBtn = document.getElementById('exportBtn');
+  const downloadListBtn = document.getElementById('downloadListBtn');
+  const generateQRBtn = document.getElementById('generateQRBtn');
+  const downloadCSVBtn = document.getElementById('downloadCSVBtn');
+  const cancelExportBtn = document.getElementById('cancelExport');
+  const downloadQRBtn = document.getElementById('downloadQRBtn');
+  const closeQRModalBtn = document.getElementById('closeQRModal');
+  
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      document.getElementById('exportModal').classList.remove('hidden');
+    });
+  }
+  
+  if (downloadListBtn) {
+    downloadListBtn.addEventListener('click', downloadCountriesList);
+  }
+  
+  if (generateQRBtn) {
+    generateQRBtn.addEventListener('click', generatePassportQR);
+  }
+  
+  if (downloadCSVBtn) {
+    downloadCSVBtn.addEventListener('click', downloadCSV);
+  }
+  
+  if (cancelExportBtn) {
+    cancelExportBtn.addEventListener('click', () => {
+      document.getElementById('exportModal').classList.add('hidden');
+    });
+  }
+  
+  if (downloadQRBtn) {
+    downloadQRBtn.addEventListener('click', downloadQRImage);
+  }
+  
+  if (closeQRModalBtn) {
+    closeQRModalBtn.addEventListener('click', () => {
+      document.getElementById('qrModal').classList.add('hidden');
+      document.getElementById('qrContainer').innerHTML = '';
+    });
+  }
+}
+
+function downloadCountriesList() {
+  // Crear contenido del archivo
+  let content = "SOUNDTRIP - PASAPORTE DE VIAJERO\n";
+  content += "================================\n\n";
+  content += `Fecha de generación: ${new Date().toLocaleString('es-ES')}\n\n`;
+  content += `Países visitados: ${visitedCountries.length} / 10\n\n`;
+  content += "LISTA DE PAÍSES:\n";
+  content += "-----------------\n";
+  
+  if (visitedCountries.length === 0) {
+    content += "Aún no has visitado ningún país.\n";
+  } else {
+    visitedCountries.forEach((country, index) => {
+      content += `${index + 1}. ${country}\n`;
+    });
+  }
+  
+  content += "\n\nPaíses restantes por visitar:\n";
+  const allCountries = places.map(p => p.country);
+  const remaining = allCountries.filter(c => !visitedCountries.includes(c));
+  
+  if (remaining.length === 0) {
+    content += "¡Felicidades! ¡Has visitado todos los países!\n";
+  } else {
+    remaining.forEach((country, index) => {
+      content += `• ${country}\n`;
+    });
+  }
+  
+  content += "\n\nGenerado por SoundTrip 🌍🎧\n";
+  
+  // Crear y descargar archivo
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `soundtrip-pasaporte-${new Date().getTime()}.txt`;
+  link.click();
+  
+  document.getElementById('exportModal').classList.add('hidden');
+}
+
+function generatePassportQR() {
+  // Crear URL con datos del pasaporte
+  const passportData = {
+    países: visitedCountries,
+    total: visitedCountries.length,
+    fecha: new Date().toISOString(),
+    app: 'SoundTrip'
+  };
+  
+  const qrText = `SoundTrip Passport: ${visitedCountries.length}/10 países visitados - ${visitedCountries.join(', ') || 'Ninguno aún'}`;
+  
+  // Limpiar container anterior
+  const qrContainer = document.getElementById('qrContainer');
+  qrContainer.innerHTML = '';
+  
+  // Generar QR
+  new QRCode(qrContainer, {
+    text: qrText,
+    width: 250,
+    height: 250,
+    colorDark: '#1f6feb',
+    colorLight: '#f5f7fa',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  
+  // Actualizar contador
+  document.getElementById('qrCountries').textContent = visitedCountries.length;
+  
+  // Mostrar modal del QR
+  document.getElementById('exportModal').classList.add('hidden');
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+
+function downloadQRImage() {
+  const qrCanvas = document.querySelector('#qrContainer canvas');
+  if (qrCanvas) {
+    const link = document.createElement('a');
+    link.href = qrCanvas.toDataURL('image/png');
+    link.download = `soundtrip-qr-${new Date().getTime()}.png`;
+    link.click();
+  }
+}
+
+function downloadCSV() {
+  // Preparar datos CSV
+  let csvContent = "País,Visitado,Categoría,Zona Horaria\n";
+  
+  places.forEach(place => {
+    const isVisited = visitedCountries.includes(place.country) ? 'Sí' : 'No';
+    const category = place.category || 'General';
+    const timezone = place.timezone || 'N/A';
+    
+    csvContent += `"${place.country}","${isVisited}","${category}","${timezone}"\n`;
+  });
+  
+  // Agregar resumen
+  csvContent += "\n";
+  csvContent += `"RESUMEN","","",\n`;
+  csvContent += `"Total visitados","${visitedCountries.length}","",\n`;
+  csvContent += `"Total por visitar","${places.length - visitedCountries.length}","",\n`;
+  csvContent += `"Porcentaje completado","${Math.round((visitedCountries.length / places.length) * 100)}%","",\n`;
+  csvContent += `"Fecha de exportación","${new Date().toLocaleString('es-ES')}","",\n`;
+  
+  // Crear y descargar archivo
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `soundtrip-datos-${new Date().getTime()}.csv`;
+  link.click();
+  
+  document.getElementById('exportModal').classList.add('hidden');
 }
 
