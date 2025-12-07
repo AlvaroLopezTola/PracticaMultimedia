@@ -35,6 +35,20 @@
     "trivia": "El Amazonas produce el 20% del oxígeno mundial. Brasil tiene la mayor biodiversidad del planeta con más de 1,3 millones de especies animales registradas.",
     "continent": "america"
   },
+
+  {
+  "country": "Argentina",
+  "lat": -38.4161,
+  "lng": -63.6167,
+  "sound": "assets/sounds/argentina.mp3",
+  "image": "assets/images/argentina.jpg",
+  "description": "Buenos Aires, tango, pampas y paisajes naturales como la Patagonia.",
+  "category": "cultura",
+  "timezone": "America/Argentina/Buenos_Aires",
+  "trivia": "Argentina es el octavo país más grande del mundo y es famosa por el tango y el fútbol.",
+  "continent": "america"
+}
+,
   {
     "country": "France",
     "lat": 48.8566,
@@ -107,6 +121,32 @@
     "trivia": "India es el país más poblado del mundo con más de 1,400 millones de habitantes. El Taj Mahal fue construido en 22 años y es considerado el símbolo del amor eterno.",
     "continent": "asia"
   },
+
+  {
+  "country": "China",
+  "lat": 35.8617,
+  "lng": 104.1954,
+  "sound": "assets/sounds/china.mp3",
+  "image": "assets/images/china.jpg",
+  "description": "Gran Muralla, ciudades modernas y tradiciones milenarias.",
+  "category": "cultura",
+  "timezone": "Asia/Shanghai",
+  "trivia": "China es el país más poblado del mundo y la Gran Muralla tiene más de 21,000 km de longitud.",
+  "continent": "asia"
+},
+{
+  "country": "Thailand",
+  "lat": 15.8700,
+  "lng": 100.9925,
+  "sound": "assets/sounds/thailand.mp3",
+  "image": "assets/images/thailand.jpg",
+  "description": "Playas tropicales, templos y vibrante cultura urbana.",
+  "category": "cultura",
+  "timezone": "Asia/Bangkok",
+  "trivia": "Tailandia es famosa por sus templos dorados, su cocina picante y festivales como Songkran.",
+  "continent": "asia"
+}
+,
   {
     "country": "Australia",
     "lat": -33.8688,
@@ -118,5 +158,93 @@
     "timezone": "Australia/Sydney",
     "trivia": "Australia es el país más grande del mundo en superficie ocupada por un país. La Gran Barrera de Coral es el arrecife de coral más grande del mundo, visible desde el espacio.",
     "continent": "oceania"
-  }
+  },
+  {
+  "country": "New Zealand",
+  "lat": -40.9006,
+  "lng": 174.886,
+  "sound": "assets/sounds/new_zealand.mp3",
+  "image": "assets/images/new_zealand.jpg",
+  "description": "Montañas, lagos y paisajes naturales impresionantes.",
+  "category": "naturaleza",
+  "timezone": "Pacific/Auckland",
+  "trivia": "Nueva Zelanda es famosa por sus paisajes de película y la cultura maorí.",
+  "continent": "oceania"
+},
+{
+  "country": "Fiji",
+  "lat": -17.7134,
+  "lng": 178.065,
+  "sound": "assets/sounds/fiji.mp3",
+  "image": "assets/images/fiji.jpg",
+  "description": "Playas paradisíacas, arrecifes y cultura polinesia.",
+  "category": "naturaleza",
+  "timezone": "Pacific/Fiji",
+  "trivia": "Fiyi está formada por más de 300 islas y es famosa por sus resorts tropicales.",
+  "continent": "oceania"
+},
+{
+  "country": "Samoa",
+  "lat": -13.759,
+  "lng": -172.1046,
+  "sound": "assets/sounds/samoa.mp3",
+  "image": "assets/images/samoa.jpg",
+  "description": "Playas tropicales y cultura tradicional polinesia.",
+  "category": "naturaleza",
+  "timezone": "Pacific/Apia",
+  "trivia": "Samoa es conocida por sus paisajes volcánicos, su cultura y danzas tradicionales.",
+  "continent": "oceania"
+}
+,
+
+  {
+  "country": "South Africa",
+  "lat": -30.5595,
+  "lng": 22.9375,
+  "sound": "assets/sounds/south_africa.mp3",
+  "image": "assets/images/south_africa.jpg",
+  "description": "Paisajes variados, vida salvaje y cultura diversa.",
+  "category": "naturaleza",
+  "timezone": "Africa/Johannesburg",
+  "trivia": "Sudáfrica es conocida como la 'Nación Arcoíris' por su diversidad cultural. Tiene tres capitales: Pretoria (administrativa), Bloemfontein (judicial) y Ciudad del Cabo (legislativa).",
+  "continent": "africa"
+},
+{
+  "country": "Egypt",
+  "lat": 26.8206,
+  "lng": 30.8025,
+  "sound": "assets/sounds/egypt.mp3",
+  "image": "assets/images/egypt.jpg",
+  "description": "Pirámides, desierto y el río Nilo.",
+  "category": "cultura",
+  "timezone": "Africa/Cairo",
+  "trivia": "Egipto es hogar de las pirámides de Giza, una de las Siete Maravillas del Mundo Antiguo. El Nilo es el río más largo de África.",
+  "continent": "africa"
+},
+{
+  "country": "Kenya",
+  "lat": -0.0236,
+  "lng": 37.9062,
+  "sound": "assets/sounds/kenya.mp3",
+  "image": "assets/images/kenya.jpg",
+  "description": "Sabana, safaris y reservas naturales.",
+  "category": "naturaleza",
+  "timezone": "Africa/Nairobi",
+  "trivia": "Kenya es famosa por sus safaris y la gran migración anual de ñus y cebras en el Masai Mara.",
+  "continent": "africa"
+},
+{
+  "country": "Morocco",
+  "lat": 31.7917,
+  "lng": -7.0926,
+  "sound": "assets/sounds/morocco.mp3",
+  "image": "assets/images/morocco.jpg",
+  "description": "Desiertos, medinas y montañas.",
+  "category": "cultura",
+  "timezone": "Africa/Casablanca",
+  "trivia": "Marruecos es famoso por sus mercados tradicionales y la arquitectura de ciudades como Marrakech y Fez.",
+  "continent": "africa"
+}
+
+
 ]

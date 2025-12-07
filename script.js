@@ -28,6 +28,7 @@ let canvasAnimationMode = 'bars'; // 'bars', 'wave', 'circular'
 let currentTimezoneOffset = 0;
 let timezoneUpdateInterval = null;
 
+
 // ==========================================
 // CONFIGURACIÓN Y PERSISTENCIA PASAPORTE
 // ==========================================
@@ -129,6 +130,8 @@ async function init() {
   initCollections();
   initGuidedTour();
   initExport();
+
+
 }
 
 // ==========================================
@@ -292,6 +295,7 @@ function initFilters() {
 // 3. MOSTRAR PAÍS (FUNCIÓN PRINCIPAL ASÍNCRONA)
 // ==========================================
 async function showPlace(place, markerRef = null) {
+  showVintageCard(place);
   if (activeMarker) activeMarker.setOpacity(1);
   if (markerRef) {
     activeMarker = markerRef;
@@ -1205,10 +1209,10 @@ let guidedTourTimeout = null;
 
 const CONTINENTS_MAP = {
   europe: ["Spain", "France", "UK", "Italy"],
-  asia: ["Japan", "India"],
-  america: ["USA", "Brazil", "Mexico"],
-  africa: [],
-  oceania: ["Australia"]
+  asia: ["Japan", "India", "China", "Thailand"],
+  america: ["USA", "Brazil", "Mexico", "Argentina"],
+  africa: ["South Africa", "Egypt", "Kenya", "Morocco"],
+  oceania: ["Australia", "New Zealand", "Fiji", "Samoa"]
 };
 
 function initGuidedTour() {
@@ -1563,4 +1567,34 @@ function downloadCSV() {
   
   document.getElementById('exportModal').classList.add('hidden');
 }
+
+
+// ============================
+// POSTAL VINTAGE
+// ============================
+function showVintageCard(place) {
+  const card = document.getElementById("vintageCard");
+  if (!card) return;
+
+  card.innerHTML = `
+    <h2>Greetings from ${place.country}!</h2>
+    <p>${place.continent ? place.continent.toUpperCase() : "WORLD TRIP"}</p>
+  `;
+
+  card.classList.remove("hidden");
+
+  // Pequeño delay para permitir animación
+  setTimeout(() => {
+    card.classList.add("show");
+  }, 10);
+
+  // Ocultar después de 2 segundos
+  setTimeout(() => {
+    card.classList.remove("show");
+    setTimeout(() => card.classList.add("hidden"), 400);
+  }, 2000);
+}
+
+
+
 
