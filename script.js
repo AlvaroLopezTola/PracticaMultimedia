@@ -15,6 +15,15 @@ let dataArray = null;
 let source = null;
 let animationId = null;
 
+// VARIABLES DEL ECUALIZADOR Y CONTROLES AVANZADOS
+let bassFilter = null;
+let midFilter = null;
+let trebleFilter = null;
+let isLooping = false;
+let countryVolumes = JSON.parse(localStorage.getItem("soundtrip_volumes") || "{}");
+let currentCountry = null;
+let canvasAnimationMode = 'bars'; // 'bars', 'wave', 'circular'
+
 // ==========================================
 // CONFIGURACIÓN Y PERSISTENCIA PASAPORTE
 // ==========================================
@@ -230,31 +239,83 @@ async function showPlace(place, markerRef = null) {
     <p>${place.description}</p>
     
     <div class="audio-controls" style="margin-top:10px;">
-      <div style="display:flex; gap:8px;">
+      <!-- BOTONES PRINCIPALES -->
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
         <button id="playBtn" style="flex:1;">▶ Reproducir</button>
         <button id="pauseBtn" style="flex:1; background:#303b47">⏸ Pausa</button>
       </div>
 
       ${favoriteBtn}
 
+      <!-- VOLUMEN INDIVIDUAL POR PAÍS -->
       <div class="volume-container">
         <span class="volume-icon">🔊</span>
-        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="${globalVolume}">
+        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="${countryVolumes[place.country] || 0.5}">
+        <span id="volValue" style="font-size:0.85rem; color:var(--muted); min-width:35px;">50%</span>
       </div>
 
+      <!-- BOTONES DE CONTROL AVANZADO -->
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <button id="loopBtn" class="control-btn" style="flex:1; background:#303b47;">🔁 Loop</button>
+        <button id="vizModeBtn" class="control-btn" style="flex:1; background:#303b47;">📊 Viz</button>
+      </div>
+
+      <!-- ECUALIZADOR -->
+      <div class="equalizer-section">
+        <div class="eq-control">
+          <label>Bass</label>
+          <input type="range" id="bassSlider" min="-50" max="50" step="1" value="0" class="eq-slider">
+          <span id="bassValue">0</span>
+        </div>
+        <div class="eq-control">
+          <label>Mid</label>
+          <input type="range" id="midSlider" min="-50" max="50" step="1" value="0" class="eq-slider">
+          <span id="midValue">0</span>
+        </div>
+        <div class="eq-control">
+          <label>Treble</label>
+          <input type="range" id="trebleSlider" min="-50" max="50" step="1" value="0" class="eq-slider">
+          <span id="trebleValue">0</span>
+        </div>
+      </div>
+
+      <!-- VISUALIZADOR -->
       <canvas id="audioVisualizer"></canvas>
     </div>
   `;
 
+  currentCountry = place;
+
   document.getElementById('playBtn').onclick  = () => startAudio(place.sound);
   document.getElementById('pauseBtn').onclick = pauseAudio;
   document.getElementById('favBtn').onclick = () => toggleFavorite(place);
+  document.getElementById('loopBtn').onclick = toggleLoop;
+  document.getElementById('vizModeBtn').onclick = toggleVisualizerMode;
 
+  // Ecualizador
+  const bassSlider = document.getElementById('bassSlider');
+  const midSlider = document.getElementById('midSlider');
+  const trebleSlider = document.getElementById('trebleSlider');
+  
+  if (bassSlider) bassSlider.addEventListener('input', (e) => updateEqualizer('bass', e.target.value));
+  if (midSlider) midSlider.addEventListener('input', (e) => updateEqualizer('mid', e.target.value));
+  if (trebleSlider) trebleSlider.addEventListener('input', (e) => updateEqualizer('treble', e.target.value));
+
+  // Volumen individual por país
   const slider = document.getElementById('volSlider');
   if(slider) {
     slider.addEventListener('input', (e) => {
-      globalVolume = parseFloat(e.target.value);
-      if (currentAudio) currentAudio.volume = globalVolume;
+      const vol = parseFloat(e.target.value);
+      globalVolume = vol;
+      if (currentAudio) currentAudio.volume = vol;
+      
+      // Guardar volumen del país
+      countryVolumes[place.country] = vol;
+      localStorage.setItem("soundtrip_volumes", JSON.stringify(countryVolumes));
+      
+      // Mostrar porcentaje
+      const volValue = document.getElementById('volValue');
+      if (volValue) volValue.textContent = Math.round(vol * 100) + '%';
     });
   }
 
@@ -275,13 +336,40 @@ function startAudio(src) {
     currentAudio = new Audio(src);
     currentAudio.crossOrigin = "anonymous"; 
     currentAudio.volume = 0; 
-    currentAudio.loop = true;
+    currentAudio.loop = isLooping;
 
     source = audioContext.createMediaElementSource(currentAudio);
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 128; 
+    analyser.fftSize = 256; 
     
-    source.connect(analyser);
+    // CREAR ECUALIZADOR CON FILTROS
+    if (!bassFilter) {
+      bassFilter = audioContext.createBiquadFilter();
+      bassFilter.type = 'lowshelf';
+      bassFilter.frequency.value = 200;
+      bassFilter.gain.value = 0;
+    }
+    
+    if (!midFilter) {
+      midFilter = audioContext.createBiquadFilter();
+      midFilter.type = 'peaking';
+      midFilter.frequency.value = 1000;
+      midFilter.Q.value = 0.5;
+      midFilter.gain.value = 0;
+    }
+    
+    if (!trebleFilter) {
+      trebleFilter = audioContext.createBiquadFilter();
+      trebleFilter.type = 'highshelf';
+      trebleFilter.frequency.value = 5000;
+      trebleFilter.gain.value = 0;
+    }
+    
+    // CONECTAR: source -> bass -> mid -> treble -> analyser -> destination
+    source.connect(bassFilter);
+    bassFilter.connect(midFilter);
+    midFilter.connect(trebleFilter);
+    trebleFilter.connect(analyser);
     analyser.connect(audioContext.destination);
 
     const bufferLength = analyser.frequencyBinCount;
@@ -315,6 +403,16 @@ function drawVisualizer() {
   analyser.getByteFrequencyData(dataArray);
   ctx.clearRect(0, 0, width, height);
 
+  if (canvasAnimationMode === 'bars') {
+    drawBars(ctx, width, height);
+  } else if (canvasAnimationMode === 'wave') {
+    drawWave(ctx, width, height);
+  } else if (canvasAnimationMode === 'circular') {
+    drawCircular(ctx, width, height);
+  }
+}
+
+function drawBars(ctx, width, height) {
   const barWidth = (width / dataArray.length) * 2.5;
   let barHeight;
   let x = 0;
@@ -329,6 +427,81 @@ function drawVisualizer() {
     x += barWidth;
   }
 }
+
+function drawWave(ctx, width, height) {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgb(31, 111, 235)';
+  ctx.beginPath();
+
+  const sliceWidth = width / dataArray.length;
+  let x = 0;
+
+  for (let i = 0; i < dataArray.length; i++) {
+    const v = dataArray[i] / 128.0;
+    const y = (v * height) / 2;
+
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+    x += sliceWidth;
+  }
+
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
+
+  // Línea de referencia
+  ctx.strokeStyle = 'rgba(31, 111, 235, 0.2)';
+  ctx.beginPath();
+  ctx.moveTo(0, height / 2);
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
+}
+
+function drawCircular(ctx, width, height) {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(width, height) / 2 - 10;
+
+  // Círculo de fondo
+  ctx.fillStyle = 'rgba(31, 111, 235, 0.1)';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Líneas radiales
+  ctx.strokeStyle = 'rgba(31, 111, 235, 0.3)';
+  for (let i = 0; i < dataArray.length; i++) {
+    const angle = (i / dataArray.length) * 2 * Math.PI;
+    const intensity = dataArray[i] / 255;
+    
+    const x1 = centerX + Math.cos(angle) * radius;
+    const y1 = centerY + Math.sin(angle) * radius;
+    const x2 = centerX + Math.cos(angle) * (radius + intensity * 30);
+    const y2 = centerY + Math.sin(angle) * (radius + intensity * 30);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  // Puntos en círculo
+  ctx.fillStyle = 'rgb(31, 111, 235)';
+  for (let i = 0; i < dataArray.length; i += 4) {
+    const angle = (i / dataArray.length) * 2 * Math.PI;
+    const intensity = dataArray[i] / 255;
+    
+    const x = centerX + Math.cos(angle) * (radius + intensity * 30);
+    const y = centerY + Math.sin(angle) * (radius + intensity * 30);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 2 + intensity * 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+}
+
 
 function pauseAudio() {
   if (currentAudio) currentAudio.pause();
@@ -727,6 +900,53 @@ function deleteCollection(collectionName) {
     delete collections[collectionName];
     saveCollections();
     updateCollectionsList();
+  }
+}
+
+// ==========================================
+// ECUALIZADOR Y CONTROLES AVANZADOS
+// ==========================================
+function updateEqualizer(type, value) {
+  const numValue = parseInt(value) / 10; // Convertir -50/50 a -5/5
+  
+  if (type === 'bass' && bassFilter) {
+    bassFilter.gain.value = numValue;
+    const bassValue = document.getElementById('bassValue');
+    if (bassValue) bassValue.textContent = value;
+  } else if (type === 'mid' && midFilter) {
+    midFilter.gain.value = numValue;
+    const midValue = document.getElementById('midValue');
+    if (midValue) midValue.textContent = value;
+  } else if (type === 'treble' && trebleFilter) {
+    trebleFilter.gain.value = numValue;
+    const trebleValue = document.getElementById('trebleValue');
+    if (trebleValue) trebleValue.textContent = value;
+  }
+}
+
+function toggleLoop() {
+  isLooping = !isLooping;
+  const loopBtn = document.getElementById('loopBtn');
+  
+  if (loopBtn) {
+    loopBtn.style.background = isLooping ? '#10b981' : '#303b47';
+    loopBtn.style.color = isLooping ? '#fff' : '';
+  }
+  
+  if (currentAudio) {
+    currentAudio.loop = isLooping;
+  }
+}
+
+function toggleVisualizerMode() {
+  const modes = ['bars', 'wave', 'circular'];
+  const currentIndex = modes.indexOf(canvasAnimationMode);
+  canvasAnimationMode = modes[(currentIndex + 1) % modes.length];
+  
+  const vizModeBtn = document.getElementById('vizModeBtn');
+  if (vizModeBtn) {
+    const modeNames = { 'bars': '📊 Barras', 'wave': '〰️ Onda', 'circular': '🔵 Circular' };
+    vizModeBtn.textContent = modeNames[canvasAnimationMode];
   }
 }
 
