@@ -1,6 +1,6 @@
 [
   {
-    "country": "Spain",
+    "country": "España",
     "lat": 40.4168,
     "lng": -3.7038,
     "sound": "assets/sounds/spain.mp3",
@@ -12,7 +12,7 @@
     "continent": "europe"
   },
   {
-    "country": "Japan",
+    "country": "Japón",
     "lat": 35.6762,
     "lng": 139.6503,
     "sound": "assets/sounds/japan.mp3",
@@ -24,7 +24,7 @@
     "continent": "asia"
   },
   {
-    "country": "Brazil",
+    "country": "Brasil",
     "lat": -22.9068,
     "lng": -43.1729,
     "sound": "assets/sounds/brazil.mp3",
@@ -50,7 +50,7 @@
 }
 ,
   {
-    "country": "France",
+    "country": "Francia",
     "lat": 48.8566,
     "lng": 2.3522,
     "sound": "assets/sounds/france.mp3",
@@ -62,7 +62,7 @@
     "continent": "europe"
   },
   {
-    "country": "UK",
+    "country": "Reino Unido",
     "lat": 51.5074,
     "lng": -0.1278,
     "sound": "assets/sounds/uk.mp3",
@@ -74,7 +74,7 @@
     "continent": "europe"
   },
   {
-    "country": "Italy",
+    "country": "Italia",
     "lat": 41.9028,
     "lng": 12.4964,
     "sound": "assets/sounds/italy.mp3",
@@ -86,7 +86,7 @@
     "continent": "europe"
   },
   {
-    "country": "USA",
+    "country": "Estados Unidos",
     "lat": 40.7128,
     "lng": -74.006,
     "sound": "assets/sounds/usa.mp3",
@@ -98,7 +98,7 @@
     "continent": "america"
   },
   {
-    "country": "Mexico",
+    "country": "México",
     "lat": 19.4326,
     "lng": -99.1332,
     "sound": "assets/sounds/mexico.mp3",
@@ -135,7 +135,7 @@
   "continent": "asia"
 },
 {
-  "country": "Thailand",
+  "country": "Tailandia",
   "lat": 15.8700,
   "lng": 100.9925,
   "sound": "assets/sounds/thailand.mp3",
@@ -160,7 +160,7 @@
     "continent": "oceania"
   },
   {
-  "country": "New Zealand",
+  "country": "Nueva Zelanda",
   "lat": -40.9006,
   "lng": 174.886,
   "sound": "assets/sounds/new_zealand.mp3",
@@ -172,7 +172,7 @@
   "continent": "oceania"
 },
 {
-  "country": "Fiji",
+  "country": "Fiyi",
   "lat": -17.7134,
   "lng": 178.065,
   "sound": "assets/sounds/fiji.mp3",
@@ -198,7 +198,7 @@
 ,
 
   {
-  "country": "South Africa",
+  "country": "Sudáfrica",
   "lat": -30.5595,
   "lng": 22.9375,
   "sound": "assets/sounds/south_africa.mp3",
@@ -210,7 +210,7 @@
   "continent": "africa"
 },
 {
-  "country": "Egypt",
+  "country": "Egipto",
   "lat": 26.8206,
   "lng": 30.8025,
   "sound": "assets/sounds/egypt.mp3",
@@ -222,7 +222,7 @@
   "continent": "africa"
 },
 {
-  "country": "Kenya",
+  "country": "Kenia",
   "lat": -0.0236,
   "lng": 37.9062,
   "sound": "assets/sounds/kenya.mp3",
@@ -234,7 +234,7 @@
   "continent": "africa"
 },
 {
-  "country": "Morocco",
+  "country": "Marruecos",
   "lat": 31.7917,
   "lng": -7.0926,
   "sound": "assets/sounds/morocco.mp3",

@@ -718,11 +718,16 @@ function updatePassport() {
   const total = places.length; 
   const visited = visitedCountries.length;
   const percent = total > 0 ? (visited / total) * 100 : 0;
+
   const countEl = document.getElementById('visited-count');
-  if(countEl) countEl.innerText = visited;
+  const totalEl = document.getElementById('total-count');
   const fillEl = document.getElementById('progress-fill');
-  if(fillEl) fillEl.style.width = `${percent}%`;
+
+  if (countEl) countEl.innerText = visited;
+  if (totalEl) totalEl.innerText = total;   // 👈 ESTA ES LA LÍNEA CLAVE
+  if (fillEl) fillEl.style.width = `${percent}%`;
 }
+
 
 function goRandom() {
   const visiblePlaces = markers.map(m => m.placeData);
@@ -1208,11 +1213,11 @@ let currentTourIndex = 0;
 let guidedTourTimeout = null;
 
 const CONTINENTS_MAP = {
-  europe: ["Spain", "France", "UK", "Italy"],
-  asia: ["Japan", "India", "China", "Thailand"],
-  america: ["USA", "Brazil", "Mexico", "Argentina"],
-  africa: ["South Africa", "Egypt", "Kenya", "Morocco"],
-  oceania: ["Australia", "New Zealand", "Fiji", "Samoa"]
+  europe: ["España", "Francia", "Reino Unido", "Italia"],
+  asia: ["Japón", "India", "China", "Tailandia"],
+  america: ["Estados Unidos", "Brasil", "México", "Argentina"],
+  africa: ["Sudáfrica", "Egipto", "Kenia", "Marruecos"],
+  oceania: ["Australia", "Nueva Zelanda", "Fiyi", "Samoa"]
 };
 
 function initGuidedTour() {
@@ -1257,79 +1262,91 @@ function startGuidedTour(continent) {
   showGuidedTourPlace();
 }
 
-function showGuidedTourPlace() {
+async function showGuidedTourPlace() {
   if (currentTourIndex >= guidedTourCountries.length) {
-    // Fin del viaje
     endGuidedTour();
     return;
   }
-  
+
   const place = guidedTourCountries[currentTourIndex];
-  
-  // Hacer clic en el marcador para mostrar el país
-  const marker = markers.find(m => m.place === place);
-  if (marker) {
-    marker.openPopup();
-  }
-  
-  // Narración de transición ANTES de mostrar la información
-  if (currentTourIndex > 0) {
-    narrateTourTransition(place);
+  const marker = markers.find(m => m.placeData === place);
+
+  // Aquí NO llamamos a showPlace aún — la narración lo hará en el momento exacto
+
+  if (currentTourIndex === 0) {
+    await narrateTourStart(place);
   } else {
-    narrateTourStart(place);
+    await narrateTourTransition(place);
   }
-  
-  // Mostrar la información completa del país de forma asincrónica
-  setTimeout(async () => {
-    await showPlace(place, marker);
-    
-    // Iniciar reproducción automática después de que se cargue la información
-    setTimeout(() => {
-      const playBtn = document.getElementById('playBtn');
-      if (playBtn) {
-        playBtn.click();
-      }
-    }, 500);
-    
-    // Pasar al siguiente país después del tiempo especificado
-    const duration = currentTourIndex === guidedTourCountries.length - 1 ? 10000 : 12000;
-    
-    guidedTourTimeout = setTimeout(() => {
-      // Parar el audio antes de pasar al siguiente país
-      stopAudio();
-      currentTourIndex++;
-      showGuidedTourPlace();
-    }, duration);
-  }, 300);
+
+  // Música después de que showPlace haya aparecido correctamente
+  setTimeout(() => {
+    const playBtn = document.getElementById("playBtn");
+    if (playBtn) playBtn.click();
+  }, 600);
+
+  // Avanzar tras escuchar música
+  guidedTourTimeout = setTimeout(() => {
+    stopAudio();
+    currentTourIndex++;
+    showGuidedTourPlace();
+  }, 8000);
 }
 
-function narrateTourStart(place) {
-  const continentEmojis = {
-    europe: '🇪🇺',
-    asia: '🌏',
-    america: '🌎',
-    africa: '🌍',
-    oceania: '🏝️'
-  };
-  
-  const emoji = continentEmojis[place.continent] || '🌍';
-  
-  const text = `Bienvenido a nuestro viaje virtual. Comenzamos explorando ${place.country}. ${emoji} ${place.description}`;
-  
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'es-ES';
-  utterance.rate = 0.95;
-  speechSynthesis.speak(utterance);
+
+function speakAsync(text) {
+  return new Promise(resolve => {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'es-ES';
+    utter.rate = 0.95;
+    
+    utter.onend = resolve;
+    speechSynthesis.speak(utter);
+  });
 }
 
-function narrateTourTransition(place) {
-  const text = `Nuestro viaje continúa. Ahora nos dirigimos a ${place.country}. ${place.description}`;
-  
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'es-ES';
-  utterance.rate = 0.95;
-  speechSynthesis.speak(utterance);
+
+async function narrateTourStart(place) {
+
+  // 1. Decir solo el país (momento exacto donde quieres mostrar la ficha)
+  const text1 = `Comenzamos nuestro viaje llegando a ${place.country}.`;
+  await speakAsync(text1);
+
+  // MOSTRAR FICHA AQUÍ MISMO ✔
+  const marker = markers.find(m => m.placeData === place);
+  await showPlace(place, marker);
+
+  // 2. Decir la descripción después
+  const textDesc = `${place.description}.`;
+  await speakAsync(textDesc);
+
+  // 3. Frase final antes de la música
+  const text2 = `Ahora vamos a escuchar la música característica de este país.`;
+  await speakAsync(text2);
 }
+
+
+
+async function narrateTourTransition(place) {
+
+  // 1. Anuncio del país, sin descripción todavía
+  const text1 = `Nuestro viaje continúa. Llegamos a ${place.country}.`;
+  await speakAsync(text1);
+
+  // MOSTRAR FICHA JUSTO AQUÍ ✔
+  const marker = markers.find(m => m.placeData === place);
+  await showPlace(place, marker);
+
+  // 2. Ahora sí descripción
+  const textDesc = `${place.description}.`;
+  await speakAsync(textDesc);
+
+  // 3. Música
+  const text2 = `Ahora vamos a escuchar la música característica de este país.`;
+  await speakAsync(text2);
+}
+
+
 
 function stopGuidedTour() {
   if (guidedTourActive) {
@@ -1418,7 +1435,7 @@ function downloadCountriesList() {
   let content = "SOUNDTRIP - PASAPORTE DE VIAJERO\n";
   content += "================================\n\n";
   content += `Fecha de generación: ${new Date().toLocaleString('es-ES')}\n\n`;
-  content += `Países visitados: ${visitedCountries.length} / 10\n\n`;
+  content += `Países visitados: ${visitedCountries.length} / ${places.length}\n\n`;
   content += "LISTA DE PAÍSES:\n";
   content += "-----------------\n";
   
@@ -1453,8 +1470,8 @@ function downloadCountriesList() {
   
   document.getElementById('exportModal').classList.add('hidden');
 }
-
 function generatePassportQR() {
+
   // Crear datos del pasaporte en JSON
   const passportData = {
     app: 'SoundTrip',
@@ -1464,75 +1481,70 @@ function generatePassportQR() {
     time: new Date().toLocaleTimeString('es-ES'),
     summary: {
       totalVisited: visitedCountries.length,
-      totalCountries: 10,
-      percentage: Math.round((visitedCountries.length / 10) * 100)
+      totalCountries: places.length,
+      percentage: Math.round((visitedCountries.length / places.length) * 100)
     },
     countries: visitedCountries,
-    remainingCountries: places.filter(p => !visitedCountries.includes(p.country)).map(p => p.country)
+    remainingCountries: places
+      .filter(p => !visitedCountries.includes(p.country))
+      .map(p => p.country)
   };
-  
-  // Crear un blob con los datos JSON
+
+  // Crear JSON para descarga
   const jsonString = JSON.stringify(passportData, null, 2);
-  const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  
-  // Crear enlace de descarga y convertirlo a data URL para el QR
-  const fileName = `soundtrip-passport-${new Date().getTime()}.json`;
-  
-  // Para el QR, vamos a usar la URL del blob (esto permitirá descargar)
-  // Pero como los QR externos no pueden acceder a URLs de blob, 
-  // usaremos un formato de texto que el usuario pueda copiar/usar
-  const qrText = `SoundTrip Passport Data:\n${jsonString}`;
-  
-  // Limpiar container anterior
-  const qrContainer = document.getElementById('qrContainer');
-  qrContainer.innerHTML = '';
-  
-  // Usar servicio QR externo (qrserver.com)
-  const encodedText = encodeURIComponent(qrText);
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedText}`;
-  
-  // Crear imagen del QR
-  const qrImg = document.createElement('img');
-  qrImg.src = qrImageUrl;
-  qrImg.alt = 'Código QR del pasaporte';
-  qrImg.style.borderRadius = '8px';
-  qrImg.style.border = '2px solid var(--border)';
-  qrImg.id = 'qrImage';
-  
-  qrContainer.appendChild(qrImg);
-  
-  // Guardar referencia al blob para la descarga
+  const blob = new Blob([jsonString], { type: "application/json" });
   window.passportBlob = blob;
-  window.passportFileName = fileName;
-  
-  // Actualizar contador
-  document.getElementById('qrCountries').textContent = visitedCountries.length;
-  
-  // Mostrar modal del QR
-  document.getElementById('exportModal').classList.add('hidden');
-  document.getElementById('qrModal').classList.remove('hidden');
+  window.passportFileName = `soundtrip-passport-${Date.now()}.json`;
+
+  // TEXTO que irá dentro del QR (como lo tenías antes)
+  const qrText =
+    `🗺️ SoundTrip - Pasaporte\n` +
+    `Países visitados: ${visitedCountries.length} / ${places.length}\n` +
+    `Lista: ${visitedCountries.join(", ")}\n` +
+    `Fecha: ${new Date().toLocaleDateString('es-ES')}`;
+
+  // Generar QR con ese texto
+  const qrContainer = document.getElementById("qrContainer");
+  qrContainer.innerHTML = "";
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrText)}`;
+
+  const img = document.createElement("img");
+  img.src = qrUrl;
+  img.id = "qrImage";
+  img.style.borderRadius = "8px";
+
+  qrContainer.appendChild(img);
+
+  document.getElementById("qrCountries").textContent = visitedCountries.length;
+
+  // Mostrar modal QR
+  document.getElementById("exportModal").classList.add("hidden");
+  document.getElementById("qrModal").classList.remove("hidden");
 }
 
+
+
 function downloadQRImage() {
-  // Opción 1: Descargar el JSON del pasaporte (mejor alternativa)
   if (window.passportBlob && window.passportFileName) {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(window.passportBlob);
     link.download = window.passportFileName;
     link.click();
     return;
   }
-  
-  // Opción 2: Si falla, descargar la imagen QR
-  const qrImg = document.getElementById('qrImage');
+
+  // Si no existe el JSON, descargar la imagen del QR
+  const qrImg = document.getElementById("qrImage");
   if (qrImg && qrImg.src) {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = qrImg.src;
-    link.download = `soundtrip-qr-${new Date().getTime()}.png`;
+    link.download = `soundtrip-qr-${Date.now()}.png`;
     link.click();
   }
 }
+
+
 
 function downloadCSV() {
   // BOM para UTF-8 (necesario para Excel reconozca los caracteres especiales)
